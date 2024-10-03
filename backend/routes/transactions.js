@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 const express = require("express");
 const router = express.Router();
 const connection = require("../db");
@@ -6,15 +5,6 @@ const connection = require("../db");
 // Ruta para obtener todas las transacciones
 router.get("/", (req, res) => {
   const query = `
-=======
-const express = require('express');
-const router = express.Router();
-const connection = require('../db');
-
-// Ruta para obtener todas las transacciones
-router.get('/', (req, res) => {
-    const query = `
->>>>>>> 3ddb46693015467a282fdfebc25ba762bc92e045
       SELECT transacciones.transaccion_id AS transaccion_id, transacciones.fecha, transacciones.tipo, transacciones.monto, 
              transacciones.tipo_impuesto, cheques.numero AS numero_cheque, bancos.nombre AS nombre_banco, clientes.nombre AS nombre_cliente
       FROM transacciones
@@ -23,7 +13,6 @@ router.get('/', (req, res) => {
       LEFT JOIN cheques ON transacciones.cheque_id = cheques.cheque_id 
     `;
 
-<<<<<<< HEAD
   connection.query(query, (err, results) => {
     if (err) throw err;
     res.json(results); // Enviar los datos al frontend
@@ -76,25 +65,6 @@ router.post("/", (req, res) => {
       );
     }
   });
-=======
-    connection.query(query, (err, results) => {
-        if (err) throw err;
-        res.json(results);  // Enviar los datos al frontend
-    });
-});
-
-
-
-
-// Ruta para agregar una nueva transacción
-router.post('/', (req, res) => {
-    const { fecha, cliente, tipo, monto, banco_id } = req.body;
-    const query = 'INSERT INTO transacciones (fecha, cliente, tipo, monto, banco_id) VALUES (?, ?, ?, ?, ?)';
-    connection.query(query, [fecha, cliente, tipo, monto, banco_id], (err, results) => {
-        if (err) throw err;
-        res.json({ message: 'Transacción agregada con éxito', id: results.insertId });
-    });
->>>>>>> 3ddb46693015467a282fdfebc25ba762bc92e045
 });
 
 module.exports = router;
