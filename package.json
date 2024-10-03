@@ -14,8 +14,11 @@
     "@mui/icons-material": "^6.1.1",
     "@mui/material": "^6.1.1",
     "axios": "^1.7.7",
+<<<<<<< HEAD
     "express": "^4.21.0",
     "my-next-app": "file:",
+=======
+>>>>>>> 3ddb46693015467a282fdfebc25ba762bc92e045
     "next": "14.2.13",
     "react": "^18",
     "react-dom": "^18"
