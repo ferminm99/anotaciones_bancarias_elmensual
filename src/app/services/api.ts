@@ -1,23 +1,30 @@
 import axios from "axios";
 
+// Configura Axios con la baseURL
 const api = axios.create({
-  baseURL: "http://localhost:3001", // Cambia la URL según tu backend
+  baseURL: "http://localhost:5000", // Solo la baseURL, sin especificar la ruta completa
 });
+
 // Función para obtener transacciones desde el backend
 export const getTransactions = () => {
-  return axios.get("http://localhost:3001/transacciones");
+  return api.get("/transacciones"); // Usa la baseURL y agrega la ruta relativa
 };
 
 // Función para agregar una nueva transacción
 export const addTransaction = (data: any) => {
-  return axios.post("http://localhost:3001/transacciones", data);
+  return api.post("/transacciones", data); // Usa la baseURL y agrega la ruta relativa
+};
+
+// Función para eliminar una transacción
+export const deleteTransaction = (id: number) => {
+  return api.delete(`/transacciones/${id}`);
 };
 
 // Función para obtener todos los bancos
 export const getBanks = () => {
-  return axios.get("http://localhost:3001/bancos");
+  return api.get("/bancos"); // Usa la baseURL y agrega la ruta relativa
 };
 
 export const getClientes = () => {
-  return axios.get("http://localhost:3001/clientes"); // Cambia la URL si es necesario
+  return api.get("/clientes"); // Usa la baseURL y agrega la ruta relativa
 };

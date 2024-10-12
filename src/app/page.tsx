@@ -1,45 +1,50 @@
-"use client"; // Esto indica que este componente es un Client Component
+"use client"; // Asegura que este archivo sea un Client Component
 
 import { useEffect, useState } from "react";
-import { getTransactions, addTransaction, getBanks } from "./services/api"; // Importamos solo una vez desde 'services/api'
+import {
+  getTransactions,
+  deleteTransaction,
+  addTransaction,
+  getBanks,
+} from "./services/api";
 import TransactionTable from "./components/TransactionTable";
 import FilterByBank from "./components/FilterByBank";
-import AddTransactionButton from "./components/TransactionButton"; // Componente para el botón de agregar transacción
-import { Transaction, Bank, CreateTransaction } from "./types"; // Importamos las interfaces desde 'types.ts'
+import AddTransactionButton from "./components/TransactionButton";
+import ConfirmDialog from "./components/ConfirmDialog"; // Importamos el nuevo diálogo
+import { Transaction, Bank, CreateTransaction } from "./types";
 
 const Home: React.FC = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]); // Array de transacciones tipado
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<
     Transaction[]
-  >([]); // Array para las transacciones filtradas
-  const [banks, setBanks] = useState<Bank[]>([]); // Array de bancos obtenidos del backend
-  const [totalSaldo, setTotalSaldo] = useState<number>(0); // Estado para el saldo total
-  const [selectedBank, setSelectedBank] = useState<string>(""); // Estado para el banco seleccionado
+  >([]);
+  const [banks, setBanks] = useState<Bank[]>([]);
+  const [totalSaldo, setTotalSaldo] = useState<number>(0);
+  const [selectedBank, setSelectedBank] = useState<string>("");
+  const [openConfirmDialog, setOpenConfirmDialog] = useState<boolean>(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<number | null>(
+    null
+  );
 
-  // Al cargar la página, hacemos una petición para obtener las transacciones y bancos
   useEffect(() => {
-    // Obtener transacciones
     getTransactions()
       .then((response) => {
-        setTransactions(response.data); // Guardamos las transacciones en el estado
-        setFilteredTransactions(response.data); // Inicializamos las transacciones filtradas
+        setTransactions(response.data);
+        setFilteredTransactions(response.data);
       })
       .catch((error) =>
         console.error("Error al obtener las transacciones:", error)
       );
 
-    // Obtener bancos
     getBanks()
       .then((response) => {
         const bancos = response.data;
-        setBanks(bancos); // Guardamos los bancos
-
-        // Convertimos los saldos a números y sumamos
+        setBanks(bancos);
         const saldoTotal = bancos.reduce(
           (acc: number, bank: Bank) => acc + parseFloat(bank.saldo_total),
           0
         );
-        setTotalSaldo(saldoTotal); // Guardamos el saldo total
+        setTotalSaldo(saldoTotal);
       })
       .catch((error) => console.error("Error al obtener los bancos:", error));
   }, []);
@@ -48,47 +53,81 @@ const Home: React.FC = () => {
   const handleAddTransaction = (data: CreateTransaction) => {
     addTransaction(data)
       .then((response) => {
-        // Manejar la respuesta después de agregar la transacción
         console.log("Transacción agregada:", response);
+        // Actualiza las transacciones después de agregar
+        setTransactions((prev) => [...prev, response.data]);
+        setFilteredTransactions((prev) => [...prev, response.data]);
       })
       .catch((error) =>
         console.error("Error al agregar la transacción:", error)
       );
   };
 
-  // Función para filtrar las transacciones por banco
   const filterByBank = (banco: string) => {
-    setSelectedBank(banco); // Actualizamos el banco seleccionado
+    setSelectedBank(banco);
     if (banco === "") {
-      setFilteredTransactions(transactions); // Mostrar todas las transacciones si no se selecciona un banco
+      setFilteredTransactions(transactions);
     } else {
       const filtered = transactions.filter(
         (transaction) => transaction.nombre_banco === banco
-      ); // Filtrar por el nombre del banco
+      );
       setFilteredTransactions(filtered);
+    }
+  };
+
+  const confirmDeleteTransaction = (id: number) => {
+    setTransactionToDelete(id);
+    setOpenConfirmDialog(true);
+  };
+
+  const handleDeleteTransaction = () => {
+    if (transactionToDelete !== null) {
+      deleteTransaction(transactionToDelete)
+        .then(() => {
+          const updatedTransactions = transactions.filter(
+            (transaction) => transaction.transaccion_id !== transactionToDelete
+          );
+          setTransactions(updatedTransactions);
+          setFilteredTransactions(updatedTransactions);
+          setOpenConfirmDialog(false);
+        })
+        .catch((error) =>
+          console.error("Error al eliminar la transacción:", error)
+        );
     }
   };
 
   return (
     <div>
       <h1>Transacciones</h1>
-      {/* Filtro por banco */}
       <FilterByBank
-        banks={banks}
+        banks={banks.map(({ nombre, saldo_total }) => ({
+          nombre,
+          saldo_total: parseFloat(saldo_total), // Convertir a número si es necesario
+        }))}
         onFilter={filterByBank}
         totalSaldo={totalSaldo}
-      />{" "}
-      {/* Pasamos la lista de bancos con el saldo y el saldo total */}
-      {/* Tabla de transacciones */}
+      />
+
       <TransactionTable
         transactions={
           filteredTransactions.length ? filteredTransactions : transactions
         }
+        onEdit={(transaction) => console.log("Edit transaction:", transaction)}
+        onDelete={confirmDeleteTransaction}
       />
-      {/* Botón para abrir el modal de agregar transacción */}
       <AddTransactionButton
         onSubmit={handleAddTransaction}
-        banks={banks.map((bank) => bank.nombre)}
+        banks={banks} // Pasa el arreglo completo de bancos
+        selectedBank={banks[0]} // Ejemplo de cómo seleccionar el primer banco
+      />
+
+      <ConfirmDialog
+        open={openConfirmDialog}
+        title="Confirmar Eliminación"
+        description={`¿Estás seguro que deseas eliminar esta transacción?`}
+        onConfirm={handleDeleteTransaction}
+        onCancel={() => setOpenConfirmDialog(false)}
       />
     </div>
   );

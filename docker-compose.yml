@@ -1,0 +1,63 @@
+version: "3.8"
+services:
+  frontend:
+    build:
+      context: . # Carpeta principal donde está tu Dockerfile del frontend
+      dockerfile: Dockerfile # Dockerfile en la carpeta principal
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    depends_on:
+      - backend
+    networks:
+      - mynetwork
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "512M"
+
+  backend:
+    build:
+      context: . # Carpeta donde está el backend
+      dockerfile: Dockerfile # Dockerfile dentro de la carpeta backend
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=elmensual_transacciones
+      - DB_USERNAME=root
+      - DB_PASSWORD=password
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app/backend
+    depends_on:
+      - db
+    networks:
+      - mynetwork
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "512M"
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: elmensual
+    ports:
+      - "3308:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - mynetwork
+
+volumes:
+  db_data:
+
+networks:
+  mynetwork:
+    driver: bridge
