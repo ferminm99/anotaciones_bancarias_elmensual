@@ -34,6 +34,13 @@ export const getClientes = () => {
   return api.get("/clientes"); // Usa la baseURL y agrega la ruta relativa
 };
 
+export const updateCliente = (
+  cliente_id: number,
+  data: { nombre: string; apellido: string }
+) => {
+  return api.put(`/clientes/${cliente_id}`, data); // Usa la baseURL y agrega la ruta relativa
+};
+
 export const addCliente = (data: { nombre: string; apellido: string }) => {
   return api.post("/clientes", data); // Usa la baseURL y agrega la ruta relativa
 };

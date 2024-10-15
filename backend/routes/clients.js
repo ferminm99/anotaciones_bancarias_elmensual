@@ -29,6 +29,27 @@ router.post("/", (req, res) => {
   });
 });
 
+// Ruta para actualizar un cliente
+router.put("/:id", (req, res) => {
+  console.log(req.body);
+  console.log(req.params);
+  const { id } = req.params;
+  const { nombre, apellido } = req.body;
+  const query =
+    "UPDATE clientes SET nombre = ?, apellido = ? WHERE cliente_id = ?";
+  connection.query(query, [nombre, apellido, id], (err, result) => {
+    if (err) {
+      res.status(500).send("Error al actualizar cliente");
+      return;
+    }
+    if (result.affectedRows === 0) {
+      res.status(404).send("Cliente no encontrado");
+    } else {
+      res.sendStatus(200);
+    }
+  });
+});
+
 // Ruta para eliminar un cliente
 router.delete("/:id", (req, res) => {
   const { id } = req.params;

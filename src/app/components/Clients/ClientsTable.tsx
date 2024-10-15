@@ -1,5 +1,5 @@
-// src/components/ClienteTable.tsx
 import * as React from "react";
+import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import IconButton from "@mui/material/IconButton";
 import Table from "@mui/material/Table";
@@ -13,12 +13,13 @@ import { Cliente } from "../../types";
 
 const ClienteTable: React.FC<{
   clientes: Cliente[];
+  onEdit: (cliente: Cliente) => void;
   onDelete: (id: number) => void;
-}> = ({ clientes, onDelete }) => {
+}> = ({ clientes, onEdit, onDelete }) => {
   return (
-    <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="cliente table">
-        <TableHead>
+    <TableContainer component={Paper} className="shadow-lg rounded-lg">
+      <Table className="table-auto min-w-full divide-y divide-gray-200">
+        <TableHead className="bg-gray-100">
           <TableRow>
             <TableCell>ID</TableCell>
             <TableCell>Nombre</TableCell>
@@ -26,7 +27,7 @@ const ClienteTable: React.FC<{
             <TableCell>Acciones</TableCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody className="bg-white divide-y divide-gray-200">
           {clientes.map((cliente) => (
             <TableRow key={cliente.cliente_id}>
               <TableCell>{cliente.cliente_id}</TableCell>
@@ -34,8 +35,16 @@ const ClienteTable: React.FC<{
               <TableCell>{cliente.apellido}</TableCell>
               <TableCell>
                 <IconButton
+                  onClick={() => onEdit(cliente)} // Llamada al handler de editar
+                  aria-label="edit"
+                  className="text-gray-500 hover:text-blue-500"
+                >
+                  <EditIcon />
+                </IconButton>
+                <IconButton
                   onClick={() => onDelete(cliente.cliente_id)}
                   aria-label="delete"
+                  className="text-gray-500 hover:text-red-500"
                 >
                   <DeleteIcon />
                 </IconButton>
