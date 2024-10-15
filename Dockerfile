@@ -1,32 +1,22 @@
 # Usar una imagen de Node como base
-FROM node:18-alpine AS builder
+FROM node:18-alpine
 
-# Instalar supervisord
-RUN apk add --no-cache supervisor
+# Instalar supervisord y dockerize
+RUN apk add --no-cache supervisor curl \
+  && curl -L https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-alpine-linux-amd64-v0.6.1.tar.gz | tar -C /usr/local/bin -xzv
 
-# Establecer el directorio de trabajo en el contenedor (para el frontend)
+# Establecer el directorio de trabajo en el contenedor
 WORKDIR /app
 
-# Copiar solo los archivos de dependencias del frontend (package.json y package-lock.json)
-COPY ./package.json ./package-lock.json ./
+# Copiar los archivos de dependencias del frontend y backend
+COPY package.json package-lock.json ./ 
+COPY ./backend/package.json ./backend/
 
-# Instalar dependencias del frontend
-RUN npm install --production
+# Instalar dependencias del frontend y backend
+RUN npm install
 
-# Copiar el código restante del frontend
-COPY ./ ./
-
-# Cambiar al directorio del backend
-WORKDIR /app/backend
-
-# Copiar solo los archivos de dependencias del backend (package.json y package-lock.json)
-COPY ./backend/package.json ./backend/package-lock.json ./
-
-# Instalar dependencias del backend
-RUN npm install --production
-
-# Volver al directorio principal (para ejecutar supervisord y manejar ambos procesos)
-WORKDIR /app
+# Copiar el código restante del frontend y backend
+COPY . .
 
 # Copiar la configuración de supervisord
 COPY ./supervisord.conf /etc/supervisord.conf
@@ -34,8 +24,5 @@ COPY ./supervisord.conf /etc/supervisord.conf
 # Exponer los puertos del frontend (3000) y backend (5000)
 EXPOSE 3000 5000
 
-# Limpiar la caché de npm
-RUN npm cache clean --force
-
-# Ejecutar supervisord para manejar ambos procesos (frontend y backend)
+# Ejecutar supervisord para manejar tanto el frontend como el backend
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

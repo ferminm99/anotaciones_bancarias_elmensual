@@ -177,3 +177,190 @@
 2024-10-12 21:58:02,057 INFO spawned: 'nextjs' with pid 9
 2024-10-12 21:58:03,270 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
 2024-10-12 21:58:03,270 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-12 22:46:00,853 WARN received SIGTERM indicating exit request
+2024-10-12 22:46:00,866 INFO waiting for backend, nextjs to die
+2024-10-12 22:46:01,270 INFO stopped: nextjs (exit status 0)
+2024-10-12 22:46:01,280 WARN stopped: backend (terminated by SIGTERM)
+2024-10-12 22:46:27,399 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-12 22:46:27,403 INFO supervisord started with pid 1
+2024-10-12 22:46:28,406 INFO spawned: 'backend' with pid 8
+2024-10-12 22:46:28,408 INFO spawned: 'nextjs' with pid 9
+2024-10-12 22:46:29,534 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-12 22:46:29,534 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-12 23:07:45,258 WARN received SIGTERM indicating exit request
+2024-10-12 23:07:45,273 INFO waiting for backend, nextjs to die
+2024-10-12 23:07:45,904 INFO stopped: nextjs (exit status 0)
+2024-10-12 23:07:45,914 WARN stopped: backend (terminated by SIGTERM)
+2024-10-12 23:08:07,799 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-12 23:08:07,806 INFO supervisord started with pid 1
+2024-10-12 23:08:08,810 INFO spawned: 'backend' with pid 8
+2024-10-12 23:08:08,812 INFO spawned: 'nextjs' with pid 9
+2024-10-12 23:08:10,009 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-12 23:08:10,009 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-12 23:53:23,061 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-12 23:53:23,064 INFO supervisord started with pid 1
+2024-10-12 23:53:24,068 INFO spawned: 'backend' with pid 8
+2024-10-12 23:53:24,069 INFO spawned: 'nextjs' with pid 9
+2024-10-12 23:53:25,238 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-12 23:53:25,239 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-12 23:59:11,951 WARN received SIGTERM indicating exit request
+2024-10-12 23:59:11,963 INFO waiting for backend, nextjs to die
+2024-10-12 23:59:12,490 INFO stopped: nextjs (exit status 0)
+2024-10-12 23:59:12,509 WARN stopped: backend (terminated by SIGTERM)
+2024-10-12 23:59:27,171 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-12 23:59:27,173 INFO supervisord started with pid 1
+2024-10-12 23:59:28,176 INFO spawned: 'backend' with pid 8
+2024-10-12 23:59:28,178 INFO spawned: 'nextjs' with pid 9
+2024-10-12 23:59:29,342 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-12 23:59:29,343 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 00:06:33,536 WARN received SIGTERM indicating exit request
+2024-10-13 00:06:33,539 INFO waiting for backend, nextjs to die
+2024-10-13 00:06:33,655 INFO stopped: nextjs (exit status 0)
+2024-10-13 00:06:33,658 WARN stopped: backend (terminated by SIGTERM)
+2024-10-13 00:06:44,906 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-13 00:06:44,909 INFO supervisord started with pid 1
+2024-10-13 00:06:45,912 INFO spawned: 'backend' with pid 8
+2024-10-13 00:06:45,914 INFO spawned: 'nextjs' with pid 9
+2024-10-13 00:06:47,085 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 00:06:47,085 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 00:53:50,210 WARN received SIGTERM indicating exit request
+2024-10-13 00:53:50,219 INFO waiting for backend, nextjs to die
+2024-10-13 00:53:50,747 INFO stopped: nextjs (exit status 0)
+2024-10-13 00:53:50,753 WARN stopped: backend (terminated by SIGTERM)
+2024-10-13 00:54:09,200 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-13 00:54:09,204 INFO supervisord started with pid 1
+2024-10-13 00:54:10,207 INFO spawned: 'backend' with pid 8
+2024-10-13 00:54:10,208 INFO spawned: 'nextjs' with pid 9
+2024-10-13 00:54:11,456 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 00:54:11,456 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 01:16:01,736 WARN received SIGTERM indicating exit request
+2024-10-13 01:16:01,752 INFO waiting for backend, nextjs to die
+2024-10-13 01:16:17,973 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-13 01:16:17,976 INFO supervisord started with pid 1
+2024-10-13 01:16:18,979 INFO spawned: 'backend' with pid 8
+2024-10-13 01:16:18,980 INFO spawned: 'nextjs' with pid 9
+2024-10-13 01:16:20,207 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 01:16:20,207 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 01:45:19,751 WARN received SIGTERM indicating exit request
+2024-10-13 01:45:19,767 INFO waiting for backend, nextjs to die
+2024-10-13 01:45:44,560 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-13 01:45:44,564 INFO supervisord started with pid 1
+2024-10-13 01:45:45,567 INFO spawned: 'backend' with pid 8
+2024-10-13 01:45:45,571 INFO spawned: 'nextjs' with pid 9
+2024-10-13 01:45:45,867 WARN exited: backend (exit status 127; not expected)
+2024-10-13 01:45:46,870 INFO spawned: 'backend' with pid 43
+2024-10-13 01:45:46,870 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 01:45:47,078 WARN exited: backend (exit status 127; not expected)
+2024-10-13 01:45:49,082 INFO spawned: 'backend' with pid 66
+2024-10-13 01:45:49,312 WARN exited: backend (exit status 127; not expected)
+2024-10-13 01:45:52,316 INFO spawned: 'backend' with pid 78
+2024-10-13 01:45:52,541 WARN exited: backend (exit status 127; not expected)
+2024-10-13 01:45:52,800 INFO gave up: backend entered FATAL state, too many start retries too quickly
+2024-10-13 01:51:26,140 WARN received SIGTERM indicating exit request
+2024-10-13 01:51:26,153 INFO waiting for nextjs to die
+2024-10-13 01:51:26,607 INFO stopped: nextjs (exit status 0)
+2024-10-13 01:52:58,418 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-13 01:52:58,421 INFO supervisord started with pid 1
+2024-10-13 01:52:59,425 INFO spawned: 'backend' with pid 8
+2024-10-13 01:52:59,426 INFO spawned: 'nextjs' with pid 9
+2024-10-13 01:52:59,715 WARN exited: backend (exit status 127; not expected)
+2024-10-13 01:53:00,718 INFO spawned: 'backend' with pid 43
+2024-10-13 01:53:00,719 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 01:53:00,931 WARN exited: backend (exit status 127; not expected)
+2024-10-13 01:53:02,935 INFO spawned: 'backend' with pid 66
+2024-10-13 01:53:03,132 WARN exited: backend (exit status 127; not expected)
+2024-10-13 01:53:06,935 INFO spawned: 'backend' with pid 82
+2024-10-13 01:53:07,273 WARN exited: backend (exit status 127; not expected)
+2024-10-13 01:53:08,274 INFO gave up: backend entered FATAL state, too many start retries too quickly
+2024-10-13 01:57:09,650 WARN received SIGTERM indicating exit request
+2024-10-13 01:57:09,665 INFO waiting for nextjs to die
+2024-10-13 01:57:09,761 INFO stopped: nextjs (exit status 0)
+2024-10-13 01:57:22,349 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-13 01:57:22,352 INFO supervisord started with pid 1
+2024-10-13 01:57:23,355 INFO spawned: 'backend' with pid 8
+2024-10-13 01:57:23,356 INFO spawned: 'nextjs' with pid 9
+2024-10-13 01:57:24,514 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 01:57:24,515 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 02:00:23,177 WARN received SIGTERM indicating exit request
+2024-10-13 02:00:23,193 INFO waiting for backend, nextjs to die
+2024-10-13 02:00:23,764 INFO stopped: nextjs (exit status 0)
+2024-10-13 02:00:24,282 WARN stopped: backend (exit status 143)
+2024-10-13 02:00:44,870 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-13 02:00:44,874 INFO supervisord started with pid 1
+2024-10-13 02:00:45,877 INFO spawned: 'backend' with pid 8
+2024-10-13 02:00:45,879 INFO spawned: 'nextjs' with pid 9
+2024-10-13 02:00:47,126 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 02:00:47,127 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 02:32:03,470 WARN received SIGTERM indicating exit request
+2024-10-13 02:32:03,487 INFO waiting for backend, nextjs to die
+2024-10-13 02:32:04,165 INFO stopped: nextjs (exit status 0)
+2024-10-13 02:32:04,656 WARN stopped: backend (exit status 143)
+2024-10-13 02:32:20,362 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-13 02:32:20,366 INFO supervisord started with pid 1
+2024-10-13 02:32:21,366 INFO spawned: 'backend' with pid 8
+2024-10-13 02:32:21,368 INFO spawned: 'nextjs' with pid 9
+2024-10-13 02:32:21,634 WARN exited: backend (exit status 127; not expected)
+2024-10-13 02:32:22,636 INFO spawned: 'backend' with pid 47
+2024-10-13 02:32:22,637 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 02:32:22,864 WARN exited: backend (exit status 127; not expected)
+2024-10-13 02:32:24,867 INFO spawned: 'backend' with pid 66
+2024-10-13 02:32:25,034 WARN exited: backend (exit status 127; not expected)
+2024-10-13 02:32:28,464 INFO spawned: 'backend' with pid 82
+2024-10-13 02:32:28,646 WARN exited: backend (exit status 127; not expected)
+2024-10-13 02:32:29,647 INFO gave up: backend entered FATAL state, too many start retries too quickly
+2024-10-13 02:33:47,568 WARN received SIGTERM indicating exit request
+2024-10-13 02:33:47,621 INFO waiting for nextjs to die
+2024-10-13 02:33:48,785 INFO stopped: nextjs (exit status 0)
+2024-10-13 02:34:04,386 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-13 02:34:04,405 INFO supervisord started with pid 1
+2024-10-13 02:34:05,408 INFO spawned: 'backend' with pid 8
+2024-10-13 02:34:05,410 INFO spawned: 'nextjs' with pid 9
+2024-10-13 02:34:06,721 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 02:34:06,721 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 02:49:03,404 WARN received SIGTERM indicating exit request
+2024-10-13 02:49:03,415 INFO waiting for backend, nextjs to die
+2024-10-13 02:49:04,017 INFO stopped: nextjs (exit status 0)
+2024-10-13 02:49:04,372 WARN stopped: backend (exit status 143)
+2024-10-13 02:49:33,128 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-13 02:49:33,130 INFO supervisord started with pid 1
+2024-10-13 02:49:34,134 INFO spawned: 'backend' with pid 8
+2024-10-13 02:49:34,135 INFO spawned: 'nextjs' with pid 9
+2024-10-13 02:49:35,308 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 02:49:35,308 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 03:06:21,085 WARN received SIGTERM indicating exit request
+2024-10-13 03:06:21,097 INFO waiting for backend, nextjs to die
+2024-10-13 03:06:21,533 INFO stopped: nextjs (exit status 0)
+2024-10-13 03:06:21,987 WARN stopped: backend (exit status 143)
+2024-10-13 03:06:43,916 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-13 03:06:43,919 INFO supervisord started with pid 1
+2024-10-13 03:06:44,923 INFO spawned: 'backend' with pid 9
+2024-10-13 03:06:44,925 INFO spawned: 'nextjs' with pid 10
+2024-10-13 03:06:45,236 WARN exited: nextjs (exit status 127; not expected)
+2024-10-13 03:06:46,238 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 03:06:46,239 INFO spawned: 'nextjs' with pid 32
+2024-10-13 03:06:46,642 WARN exited: nextjs (exit status 127; not expected)
+2024-10-13 03:06:49,245 INFO spawned: 'nextjs' with pid 63
+2024-10-13 03:06:49,578 WARN exited: nextjs (exit status 127; not expected)
+2024-10-13 03:06:52,872 INFO spawned: 'nextjs' with pid 79
+2024-10-13 03:06:53,000 WARN exited: nextjs (exit status 127; not expected)
+2024-10-13 03:06:54,000 INFO gave up: nextjs entered FATAL state, too many start retries too quickly
+2024-10-13 03:07:38,502 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-13 03:07:38,510 INFO supervisord started with pid 1
+2024-10-13 03:07:39,516 INFO spawned: 'backend' with pid 8
+2024-10-13 03:07:39,517 INFO spawned: 'nextjs' with pid 9
+2024-10-13 03:07:41,034 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 03:07:41,034 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 03:14:32,448 WARN received SIGTERM indicating exit request
+2024-10-13 03:14:32,465 INFO waiting for backend, nextjs to die
+2024-10-13 03:14:33,227 INFO stopped: nextjs (exit status 0)
+2024-10-13 03:14:33,681 WARN stopped: backend (exit status 143)
+2024-10-13 03:15:23,104 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-13 03:15:23,110 INFO supervisord started with pid 1
+2024-10-13 03:15:24,115 INFO spawned: 'backend' with pid 8
+2024-10-13 03:15:24,117 INFO spawned: 'nextjs' with pid 9
+2024-10-13 03:15:25,621 INFO success: backend entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 03:15:25,621 INFO success: nextjs entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-13 03:21:29,271 WARN received SIGTERM indicating exit request
+2024-10-13 03:21:29,290 INFO waiting for backend, nextjs to die
+2024-10-13 03:21:29,645 INFO stopped: nextjs (exit status 0)
+2024-10-13 03:21:30,169 WARN stopped: backend (exit status 143)
