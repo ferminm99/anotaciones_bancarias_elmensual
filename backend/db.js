@@ -1,20 +1,40 @@
-const mysql = require("mysql2");
+// const mysql = require("mysql2");
+
+// // Configuración de la conexión a la base de datos
+// const connection = mysql.createConnection({
+//   port: process.env.DB_PORT || 3306, // Aquí se debe usar el puerto 3306
+//   host: process.env.DB_HOST || "localhost",
+//   user: process.env.DB_USERNAME || "root",
+//   password: process.env.DB_PASSWORD || "",
+//   database: process.env.DB_DATABASE || "elmensual_transacciones",
+// });
+
+// connection.connect((err) => {
+//   if (err) {
+//     console.error("Error conectándose a la base de datos:", err);
+//     return;
+//   }
+//   console.log("Conectado a la base de datos MySQL");
+// });
+
+// module.exports = connection;
+
+const { Pool } = require("pg");
 
 // Configuración de la conexión a la base de datos
-const connection = mysql.createConnection({
-  port: process.env.DB_PORT || 3306, // Aquí se debe usar el puerto 3306
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USERNAME || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_DATABASE || "elmensual_transacciones",
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL, // Usa la URL que guardaste en el .env
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
-connection.connect((err) => {
+pool.connect((err) => {
   if (err) {
     console.error("Error conectándose a la base de datos:", err);
     return;
   }
-  console.log("Conectado a la base de datos MySQL");
+  console.log("Conectado a la base de datos PostgreSQL");
 });
 
-module.exports = connection;
+module.exports = pool;

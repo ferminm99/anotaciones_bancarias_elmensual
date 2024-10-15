@@ -20,6 +20,7 @@ const FilterByBank: React.FC<Props> = ({ banks, onFilter, totalSaldo }) => {
     const selectedBanco = banks.find(
       (banco) => banco.nombre === e.target.value
     );
+    console.log(totalSaldo);
     onFilter(selectedBanco || null); // Pasamos el objeto Bank completo o null
   };
 

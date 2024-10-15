@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Transaction, CreateTransaction } from "../types";
 
 // Configura Axios con la baseURL
 const api = axios.create({
@@ -11,12 +12,12 @@ export const getTransactions = () => {
 };
 
 // Función para agregar una nueva transacción
-export const addTransaction = (data: any) => {
+export const addTransaction = (data: CreateTransaction) => {
   return api.post("/transacciones", data); // Usa la baseURL y agrega la ruta relativa
 };
 
 // Función para actualizar una transacción existente
-export const updateTransaction = (id: number, data: any) => {
+export const updateTransaction = (id: number, data: Transaction) => {
   return api.put(`/transacciones/${id}`, data); // Usa la baseURL y agrega la ruta relativa con el ID
 };
 
