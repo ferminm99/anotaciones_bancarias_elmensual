@@ -22,7 +22,7 @@ export interface CreateTransaction {
 export interface Bank {
   banco_id: number;
   nombre: string;
-  saldo_total: string;
+  saldo_total: number;
 }
 
 export interface Cliente {

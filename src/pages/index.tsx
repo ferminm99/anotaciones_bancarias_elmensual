@@ -184,7 +184,8 @@ const Home: React.FC = () => {
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
 
-      const monto = transaction.monto.toString();
+      const monto =
+        transaction.monto !== null ? transaction.monto.toString() : "0";
 
       return (
         nombreCliente?.includes(term) ||
@@ -219,7 +220,7 @@ const Home: React.FC = () => {
         <FilterByBank
           banks={banks.map(({ nombre, saldo_total, banco_id }) => ({
             nombre,
-            saldo_total: parseFloat(saldo_total), // Convertir a número si es necesario
+            saldo_total: saldo_total, // Convertir a número si es necesario
             banco_id: banco_id ?? 0,
           }))}
           onFilter={(banco) =>

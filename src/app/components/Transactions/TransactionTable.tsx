@@ -72,8 +72,11 @@ const TransactionTable: React.FC<{
               </TableCell>
 
               <TableCell className="px-6 py-4 whitespace-nowrap">
-                {formatNumber(transaction.monto)}
+                {transaction.monto !== null
+                  ? formatNumber(transaction.monto)
+                  : "-"}
               </TableCell>
+
               <TableCell className="px-6 py-4 whitespace-nowrap">
                 {transaction.nombre_banco}
               </TableCell>

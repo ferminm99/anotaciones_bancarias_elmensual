@@ -33,8 +33,7 @@ const FilterByBank: React.FC<Props> = ({ banks, onFilter, totalSaldo }) => {
         </MenuItem>
         {banks.map((banco, index) => (
           <MenuItem key={index} value={banco.nombre}>
-            {banco.nombre} (Saldo: {formatNumber(parseFloat(banco.saldo_total))}
-            )
+            {banco.nombre} (Saldo: {formatNumber(banco.saldo_total)})
           </MenuItem>
         ))}
       </Select>
