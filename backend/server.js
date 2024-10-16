@@ -37,6 +37,7 @@ const corsOptions = {
   origin: "https://anotaciones-bancarias-elmensual.vercel.app", // Reemplaza con tu dominio de Vercel
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Métodos HTTP permitidos
   credentials: true, // Para permitir el uso de cookies, si es necesario
+  allowedHeaders: ["Content-Type", "Authorization"], // Headers permitidos
   optionsSuccessStatus: 204,
 };
 
