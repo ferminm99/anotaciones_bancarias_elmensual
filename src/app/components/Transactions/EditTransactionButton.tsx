@@ -18,6 +18,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 import { Bank, Cliente, Transaction } from "../../types";
 import { getClientes, updateTransaction } from "../../services/api"; // Importamos la nueva función
 import { formatNumber } from "../../../utils/formatNumber";
+import { SelectChangeEvent } from "@mui/material"; // Importar SelectChangeEvent
 
 interface EditTransactionButtonProps {
   onSubmit: (data: Transaction) => void;
@@ -155,7 +156,11 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
                 id="tipo-transaccion"
                 name="tipo"
                 value={transaction.tipo}
-                onChange={(e) => handleChange(e as React.ChangeEvent<any>)}
+                onChange={(e) =>
+                  handleChange(
+                    e as React.ChangeEvent<{ name?: string; value: unknown }>
+                  )
+                } // Usar SelectChangeEvent en lugar de HTMLSelectElement
                 label="Tipo de Transacción"
               >
                 <MenuItem value="transferencia">Transferencia</MenuItem>

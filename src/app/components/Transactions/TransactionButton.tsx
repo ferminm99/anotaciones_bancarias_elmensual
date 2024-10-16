@@ -190,7 +190,11 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
               id="tipo-transaccion"
               name="tipo" // Asegúrate de que el atributo `name` está aquí
               value={transaction.tipo}
-              onChange={(e) => handleChange(e as React.ChangeEvent<any>)}
+              onChange={(e) =>
+                handleChange(
+                  e as React.ChangeEvent<{ name?: string; value: unknown }>
+                )
+              }
               label="Tipo de Transacción"
             >
               <MenuItem value="transferencia">Transferencia</MenuItem>
