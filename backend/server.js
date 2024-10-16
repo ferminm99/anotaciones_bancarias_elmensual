@@ -33,22 +33,24 @@ const app = express();
 app.use(express.json()); // Para manejar JSON en las peticiones
 
 // Configuración de CORS para permitir solicitudes desde tu frontend en Vercel
-const corsOptions = {
-  origin: "https://anotaciones-bancarias-elmensual.vercel.app", // Reemplaza con tu dominio de Vercel
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Métodos HTTP permitidos
-  credentials: true, // Para permitir el uso de cookies, si es necesario
-  allowedHeaders: ["Content-Type", "Authorization"], // Headers permitidos
-  optionsSuccessStatus: 204,
-};
+// const corsOptions = {
+//   origin: "https://anotaciones-bancarias-elmensual.vercel.app", // Reemplaza con tu dominio de Vercel
+//   methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Métodos HTTP permitidos
+//   credentials: true, // Para permitir el uso de cookies, si es necesario
+//   allowedHeaders: ["Content-Type", "Authorization"], // Headers permitidos
+//   optionsSuccessStatus: 204,
+// };
 
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
+
+app.use(cors()); // Permitir todo el tráfico CORS para probar
 
 // Rutas
 app.use("/transacciones", transactionsRoutes); // Rutas para transacciones
 app.use("/bancos", banksRoutes); // Rutas para bancos
 app.use("/clientes", clientsRouter);
 
-app.use("/ping", (req, res) => {
+app.get("/ping", (req, res) => {
   res.send("pong");
 });
 
