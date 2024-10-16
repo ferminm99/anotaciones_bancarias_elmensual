@@ -1,9 +1,0 @@
-node_modules
-.next
-.git
-.vscode
-.DS_Store
-npm-debug.log
-docker-compose.yml
-Dockerfile
-.env
