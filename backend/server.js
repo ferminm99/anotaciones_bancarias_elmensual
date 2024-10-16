@@ -48,13 +48,17 @@ app.use("/transacciones", transactionsRoutes); // Rutas para transacciones
 app.use("/bancos", banksRoutes); // Rutas para bancos
 app.use("/clientes", clientsRouter);
 
+app.get("/ping", (req, res) => {
+  res.send("pong");
+});
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send("Algo salió mal");
 });
 
 // Iniciar el servidor
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
