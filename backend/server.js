@@ -41,13 +41,8 @@ const corsOptions = {
   optionsSuccessStatus: 204,
 };
 
-//app.use(cors(corsOptions)); // Habilitar CORS con las opciones especificadas
+app.use(cors(corsOptions));
 
-app.use(
-  cors({
-    origin: "*", // Esto permite solicitudes de cualquier dominio, pero solo para desarrollo.
-  })
-);
 // Rutas
 app.use("/transacciones", transactionsRoutes); // Rutas para transacciones
 app.use("/bancos", banksRoutes); // Rutas para bancos
