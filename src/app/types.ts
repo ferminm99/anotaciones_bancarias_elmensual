@@ -6,7 +6,7 @@ export interface Transaction {
   cliente_id: number | null;
   nombre_cliente: string | null;
   tipo: string;
-  monto: number;
+  monto: number | null;
   banco_id: number;
   nombre_banco: string;
 }

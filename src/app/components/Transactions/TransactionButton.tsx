@@ -67,7 +67,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
   }, [initialSelectedBank]);
 
   const isFormValid = () => {
-    const isMontoValid = transaction.monto > 0;
+    const isMontoValid = transaction.monto !== null && transaction.monto > 0;
     const isFechaValid = transaction.fecha.trim() !== "";
 
     // El cliente solo es obligatorio para transferencia o interdeposito
