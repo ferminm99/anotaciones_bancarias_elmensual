@@ -48,7 +48,7 @@ app.use("/transacciones", transactionsRoutes); // Rutas para transacciones
 app.use("/bancos", banksRoutes); // Rutas para bancos
 app.use("/clientes", clientsRouter);
 
-app.get("/ping", (req, res) => {
+app.use("/ping", (req, res) => {
   res.send("pong");
 });
 
