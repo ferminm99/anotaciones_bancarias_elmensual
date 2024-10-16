@@ -39,7 +39,7 @@ const Home: React.FC = () => {
       .then((response) => {
         setBanks(response.data);
         const saldoTotal = response.data.reduce(
-          (acc: number, bank: Bank) => acc + parseFloat(bank.saldo_total),
+          (acc: number, bank: Bank) => acc + bank.saldo_total,
           0
         );
         setTotalSaldo(saldoTotal);
@@ -66,7 +66,7 @@ const Home: React.FC = () => {
         const bancos = response.data;
         setBanks(bancos);
         const saldoTotal = bancos.reduce(
-          (acc: number, bank: Bank) => acc + parseFloat(bank.saldo_total),
+          (acc: number, bank: Bank) => acc + bank.saldo_total,
           0
         );
         setTotalSaldo(saldoTotal);
