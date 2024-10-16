@@ -1,14 +1,19 @@
 import { forwardRef } from "react";
 import Link, { LinkProps } from "next/link";
+import { UrlObject } from "url";
 
-// Componente Custom para adaptar el Link de Next.js con ref para Material UI
+// Función para manejar el tipo Url
+const resolveHref = (href: string | UrlObject): string =>
+  typeof href === "string" ? href : String(href);
+
 const CustomLink = forwardRef<HTMLAnchorElement, LinkProps>(function CustomLink(
   props,
   ref
 ) {
+  const { href, ...other } = props;
   return (
     <Link {...props} passHref legacyBehavior>
-      <a ref={ref} {...props} />
+      <a ref={ref} href={resolveHref(href)} {...other} />
     </Link>
   );
 });

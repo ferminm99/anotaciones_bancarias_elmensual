@@ -130,11 +130,11 @@ const ModernSidebar: React.FC<{ children: React.ReactNode }> = ({
             marginTop: 2, // Añadimos un margen superior para bajar los elementos
           }}
         >
-          <ListItem button component={CustomLink} href="/">
+          <ListItem component={CustomLink} href="/">
             <ListItemText primary="Transacciones" />
           </ListItem>
 
-          <ListItem button component={CustomLink} href="/clients">
+          <ListItem component={CustomLink} href="/clients">
             <ListItemText primary="Clientes" />
           </ListItem>
         </List>
