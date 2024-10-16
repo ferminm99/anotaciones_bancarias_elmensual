@@ -58,6 +58,7 @@ const Clientes: React.FC = () => {
   const handleEditCliente = (cliente: Cliente) => {
     setClienteToEdit(cliente);
     setOpenEditDialog(true);
+    console.log(openEditDialog);
   };
 
   const handleUpdateCliente = (data: Cliente) => {

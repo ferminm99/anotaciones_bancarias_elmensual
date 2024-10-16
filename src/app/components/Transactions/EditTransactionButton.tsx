@@ -18,7 +18,6 @@ import Autocomplete from "@mui/material/Autocomplete";
 import { Bank, Cliente, Transaction } from "../../types";
 import { getClientes, updateTransaction } from "../../services/api"; // Importamos la nueva función
 import { formatNumber } from "../../../utils/formatNumber";
-import { SelectChangeEvent } from "@mui/material"; // Importar SelectChangeEvent
 
 interface EditTransactionButtonProps {
   onSubmit: (data: Transaction) => void;

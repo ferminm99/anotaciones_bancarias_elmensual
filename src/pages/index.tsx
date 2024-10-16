@@ -14,6 +14,7 @@ import ConfirmDialog from "../app/components/ConfirmDialog";
 import EditTransactionButton from "../app/components/Transactions/EditTransactionButton"; // Importamos el nuevo botón
 import { Transaction, Bank, CreateTransaction } from "../app/types";
 import { Pagination } from "@mui/material";
+import Clientes from "./clients";
 
 const Home: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -30,7 +31,7 @@ const Home: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [transactionToEdit, setTransactionToEdit] =
     useState<Transaction | null>(null);
-  // const [openEditDialog, setOpenEditDialog] = useState<boolean>(false); // Controlamos la apertura del diálogo de edición
+  const [openEditDialog, setOpenEditDialog] = useState<boolean>(false); // Controlamos la apertura del diálogo de edición
   const [currentPage, setCurrentPage] = useState<number>(1);
   const transactionsPerPage = 10;
 
@@ -99,8 +100,8 @@ const Home: React.FC = () => {
   const handleEditTransaction = (transaction: Transaction) => {
     console.log(transaction);
     setTransactionToEdit(transaction); // Establecemos la transacción a editar
-    // setOpenEditDialog(true); // Abrimos el diálogo
-    // console.log(openEditDialog);
+    setOpenEditDialog(true); // Abrimos el diálogo
+    console.log(openEditDialog);
   };
 
   const handleUpdateTransaction = (data: Transaction) => {
@@ -121,7 +122,7 @@ const Home: React.FC = () => {
     });
 
     setTransactionToEdit(null); // Limpiamos la transacción seleccionada
-    // setOpenEditDialog(false); // Cerramos el diálogo
+    setOpenEditDialog(false); // Cerramos el diálogo
     // Llama a fetchBanks para actualizar los bancos
     fetchBanks();
   };
