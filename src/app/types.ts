@@ -14,7 +14,7 @@ export interface Transaction {
 export interface CreateTransaction {
   fecha: string;
   cliente_id: number | null;
-  monto: number;
+  monto: number | null;
   tipo: string;
   banco_id: number;
 }
