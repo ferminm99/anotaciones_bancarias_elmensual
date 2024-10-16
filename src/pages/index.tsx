@@ -14,7 +14,6 @@ import ConfirmDialog from "../app/components/ConfirmDialog";
 import EditTransactionButton from "../app/components/Transactions/EditTransactionButton"; // Importamos el nuevo botón
 import { Transaction, Bank, CreateTransaction } from "../app/types";
 import { Pagination } from "@mui/material";
-import Clientes from "./clients";
 
 const Home: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
