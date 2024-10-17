@@ -11,17 +11,22 @@ router.get("/", (req, res) => {
       transacciones.tipo, 
       transacciones.monto, 
       bancos.nombre AS nombre_banco, 
-      CONCAT(clientes.nombre, ' ', IFNULL(clientes.apellido, '')) AS nombre_cliente
+      CONCAT(clientes.nombre, ' ', COALESCE(clientes.apellido, '')) AS nombre_cliente
     FROM transacciones
     JOIN bancos ON transacciones.banco_id = bancos.banco_id
     LEFT JOIN clientes ON transacciones.cliente_id = clientes.cliente_id
   `;
 
   connection.query(query, (err, results) => {
-    if (err) throw err;
-    res.json(results); // Enviar los datos al frontend
+    if (err) {
+      console.error("Error ejecutando la consulta:", err);
+      res.status(500).send("Error al obtener las transacciones");
+      return;
+    }
+    res.json(results.rows); // PostgreSQL devuelve los resultados en "rows"
   });
 });
+
 // Ruta para agregar una nueva transacción
 router.post("/", (req, res) => {
   const { fecha, nombre_cliente, cliente_id, tipo, monto, banco_id } = req.body;
@@ -46,7 +51,7 @@ router.post("/", (req, res) => {
     }
 
     const queryCliente =
-      "SELECT cliente_id FROM clientes WHERE nombre = ? AND (apellido = ? OR apellido IS NULL)";
+      "SELECT cliente_id FROM clientes WHERE nombre = $1 AND (apellido = $2 OR apellido IS NULL)";
 
     connection.query(queryCliente, [nombre, apellido], (err, result) => {
       if (err) {
@@ -57,19 +62,19 @@ router.post("/", (req, res) => {
 
       let cliente_id; // Declaramos cliente_id con let para poder reasignarlo
 
-      if (result.length > 0) {
-        cliente_id = result[0].cliente_id;
+      if (result.rows.length > 0) {
+        cliente_id = result.rows[0].cliente_id;
         insertarTransaccion(cliente_id, nombre + " " + apellido); // Pasar nombre completo
       } else {
         const insertCliente =
-          "INSERT INTO clientes (nombre, apellido) VALUES (?, ?)";
+          "INSERT INTO clientes (nombre, apellido) VALUES ($1, $2) RETURNING cliente_id";
         connection.query(insertCliente, [nombre, apellido], (err, result) => {
           if (err) {
             console.error("Error al insertar cliente:", err);
             res.status(500).send("Error al insertar cliente");
             return;
           }
-          cliente_id = result.insertId; // Ahora cliente_id puede ser reasignado
+          cliente_id = result.rows[0].cliente_id; // Ahora cliente_id puede ser reasignado
           insertarTransaccion(cliente_id, nombre + " " + apellido); // Pasar nombre completo
         });
       }
@@ -79,7 +84,7 @@ router.post("/", (req, res) => {
   // Modificar la función insertarTransaccion para aceptar nombre_cliente como argumento
   function insertarTransaccion(cliente_id, nombre_cliente) {
     const query =
-      "INSERT INTO transacciones (fecha, cliente_id, tipo, monto, banco_id) VALUES (?, ?, ?, ?, ?)";
+      "INSERT INTO transacciones (fecha, cliente_id, tipo, monto, banco_id) VALUES ($1, $2, $3, $4, $5) RETURNING transaccion_id";
 
     // En la consulta, si cliente_id es null, lo pasamos como NULL
     connection.query(
@@ -95,7 +100,7 @@ router.post("/", (req, res) => {
         // Ejemplo de respuesta desde el backend en la inserción de transacciones
         res.json({
           message: "Transacción agregada con éxito",
-          transaccion_id: result.insertId,
+          transaccion_id: result.rows[0].transaccion_id,
           cliente_id: cliente_id,
           nombre_cliente: nombre_cliente, // Ahora está bien definido
           banco_id: banco_id,
@@ -134,7 +139,7 @@ router.put("/:id", (req, res) => {
     }
 
     const queryCliente =
-      "SELECT cliente_id FROM clientes WHERE nombre = ? AND (apellido = ? OR apellido IS NULL)";
+      "SELECT cliente_id FROM clientes WHERE nombre = $1 AND (apellido = $2 OR apellido IS NULL)";
 
     connection.query(queryCliente, [nombre, apellido], (err, result) => {
       if (err) {
@@ -145,20 +150,20 @@ router.put("/:id", (req, res) => {
 
       let cliente_id;
 
-      if (result.length > 0) {
-        cliente_id = result[0].cliente_id;
+      if (result.rows.length > 0) {
+        cliente_id = result.rows[0].cliente_id;
         console.log("Cliente ID: ", cliente_id);
         actualizarTransaccion(cliente_id, nombre + " " + apellido);
       } else {
         const insertCliente =
-          "INSERT INTO clientes (nombre, apellido) VALUES (?, ?)";
+          "INSERT INTO clientes (nombre, apellido) VALUES ($1, $2) RETURNING cliente_id";
         connection.query(insertCliente, [nombre, apellido], (err, result) => {
           if (err) {
             console.error("Error al insertar cliente:", err);
             res.status(500).send("Error al insertar cliente");
             return;
           }
-          cliente_id = result.insertId;
+          cliente_id = result.rows[0].cliente_id;
           console.log("Cliente ID: ", cliente_id);
           actualizarTransaccion(cliente_id, nombre + " " + apellido);
         });
@@ -169,7 +174,7 @@ router.put("/:id", (req, res) => {
   function actualizarTransaccion(cliente_id, nombre_cliente) {
     console.log("LLEGA A ACTUALIZAR");
     const query =
-      "UPDATE transacciones SET fecha = ?, cliente_id = ?, tipo = ?, monto = ?, banco_id = ? WHERE transaccion_id = ?";
+      "UPDATE transacciones SET fecha = $1, cliente_id = $2, tipo = $3, monto = $4, banco_id = $5 WHERE transaccion_id = $6";
 
     // Si cliente_id es nulo, lo pasamos como null en la consulta SQL
     connection.query(
@@ -200,17 +205,12 @@ router.put("/:id", (req, res) => {
   }
 });
 
-// router.put("/:id", (req, res) => {
-//   console.log("PUT request received for transaction ID:", req.params.id); // Verifica que esto se imprima
-//   // Tu lógica de actualización aquí...
-// });
-
 // Ruta para eliminar una transacción
 router.delete("/:id", (req, res) => {
   const { id } = req.params; // Extraer el ID correctamente
 
   // Consulta SQL para eliminar la transacción
-  const query = "DELETE FROM transacciones WHERE transaccion_id = ?";
+  const query = "DELETE FROM transacciones WHERE transaccion_id = $1";
 
   connection.query(query, [id], (err, result) => {
     if (err) {
@@ -220,7 +220,7 @@ router.delete("/:id", (req, res) => {
         .json({ message: "Error al eliminar la transacción" });
     }
 
-    if (result.affectedRows > 0) {
+    if (result.rowCount > 0) {
       console.log("Transacción eliminada con éxito:", id); // Log si se elimina correctamente
       res.json({ message: "Transacción eliminada con éxito" });
     } else {

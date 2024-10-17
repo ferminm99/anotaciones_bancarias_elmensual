@@ -23,12 +23,13 @@
 //   console.log(`Servidor corriendo en el puerto ${PORT}`);
 // });
 
+require("dotenv").config(); // Cargar las variables de entorno
+console.log("Conectando a la base de datos:", process.env.DATABASE_URL);
 const express = require("express");
 const cors = require("cors");
 const transactionsRoutes = require("./routes/transactions");
 const banksRoutes = require("./routes/banks");
 const clientsRouter = require("./routes/clients");
-
 const app = express();
 app.use(express.json()); // Para manejar JSON en las peticiones
 

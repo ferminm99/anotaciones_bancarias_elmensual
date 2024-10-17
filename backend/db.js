@@ -21,9 +21,11 @@
 
 const { Pool } = require("pg");
 
+// Asegúrate de que estás utilizando process.env.DATABASE_URL
+const connectionString = process.env.DATABASE_URL;
 // Configuración de la conexión a la base de datos
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // Usa la URL que guardaste en el .env
+  connectionString: connectionString, // Usa la URL que guardaste en el .env
   ssl: {
     rejectUnauthorized: false,
   },
