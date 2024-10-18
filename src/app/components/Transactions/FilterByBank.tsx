@@ -31,11 +31,17 @@ const FilterByBank: React.FC<Props> = ({ banks, onFilter, totalSaldo }) => {
         <MenuItem value="">
           <em>Todos los bancos</em>
         </MenuItem>
-        {banks.map((banco, index) => (
-          <MenuItem key={index} value={banco.nombre}>
-            {banco.nombre} (Saldo: {formatNumber(banco.saldo_total)})
+        {banks.length > 0 ? (
+          banks.map((banco) => (
+            <MenuItem key={banco.banco_id} value={banco.nombre}>
+              {banco.nombre} (Saldo: {formatNumber(banco.saldo_total)})
+            </MenuItem>
+          ))
+        ) : (
+          <MenuItem value="">
+            <em>No hay bancos disponibles</em>
           </MenuItem>
-        ))}
+        )}
       </Select>
     </FormControl>
   );

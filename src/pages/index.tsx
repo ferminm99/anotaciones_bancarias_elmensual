@@ -37,8 +37,10 @@ const Home: React.FC = () => {
   const fetchBanks = () => {
     getBanks()
       .then((response) => {
-        setBanks(response.data);
-        const saldoTotal = response.data.reduce(
+        console.log("Bancos recibidos:", response.data); // Verificar qué bancos estás recibiendo
+        const bancos = response.data;
+        setBanks(bancos);
+        const saldoTotal = bancos.reduce(
           (acc: number, bank: Bank) => acc + bank.saldo_total,
           0
         );
