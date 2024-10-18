@@ -234,6 +234,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
             "retiro_efectivo",
             "deposito_efectivo",
             "gastos_mantenimiento",
+            "impuesto",
           ].includes(transaction.tipo) && (
             <>
               <FormControl component="fieldset" margin="normal">

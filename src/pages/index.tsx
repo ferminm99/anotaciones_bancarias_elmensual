@@ -130,7 +130,7 @@ const Home: React.FC = () => {
     setSelectedBank(banco);
     const filtered = banco
       ? transactions.filter(
-          (transaction) => transaction.nombre_banco === banco.nombre
+          (transaction) => transaction.banco_id === banco.banco_id // Filtramos por banco_id
         )
       : transactions; // Si no hay banco seleccionado, mostramos todas las transacciones
     setFilteredTransactions(filtered);
@@ -220,8 +220,8 @@ const Home: React.FC = () => {
         <FilterByBank
           banks={banks.map(({ nombre, saldo_total, banco_id }) => ({
             nombre,
-            saldo_total: saldo_total, // Convertir a número si es necesario
-            banco_id: banco_id ?? 0,
+            saldo_total,
+            banco_id,
           }))}
           onFilter={(banco) =>
             filterByBank(
