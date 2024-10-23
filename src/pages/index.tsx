@@ -37,7 +37,6 @@ const Home: React.FC = () => {
   const fetchBanks = () => {
     getBanks()
       .then((response) => {
-        console.log("Bancos recibidos:", response.data); // Verificar qué bancos estás recibiendo
         const bancos = response.data;
         setBanks(bancos);
         const saldoTotal = bancos.reduce(
@@ -50,28 +49,45 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    getTransactions()
-      .then((response) => {
-        const orderedTransactions = response.data.sort(
-          (a: Transaction, b: Transaction) =>
-            new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
-        );
-        setTransactions(orderedTransactions);
-        setFilteredTransactions(orderedTransactions);
-      })
-      .catch((error) =>
-        console.error("Error al obtener las transacciones:", error)
-      );
-
+    // Obtener los bancos
     getBanks()
       .then((response) => {
         const bancos = response.data;
         setBanks(bancos);
+
         const saldoTotal = bancos.reduce(
           (acc: number, bank: Bank) => acc + bank.saldo_total,
           0
         );
         setTotalSaldo(saldoTotal);
+
+        // Si hay bancos, selecciona el primero
+        if (bancos.length > 0) {
+          const firstBank = bancos[0]; // Primer banco seleccionado
+          setSelectedBank(firstBank);
+
+          // Ahora obtener las transacciones
+          getTransactions()
+            .then((response) => {
+              const orderedTransactions = response.data.sort(
+                (a: Transaction, b: Transaction) =>
+                  new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+              );
+
+              setTransactions(orderedTransactions);
+
+              // Filtrar las transacciones por el primer banco seleccionado
+              const filtered = orderedTransactions.filter(
+                (transaction: Transaction) =>
+                  transaction.banco_id === firstBank.banco_id
+              );
+
+              setFilteredTransactions(filtered); // Actualizar las transacciones filtradas
+            })
+            .catch((error) =>
+              console.error("Error al obtener las transacciones:", error)
+            );
+        }
       })
       .catch((error) => console.error("Error al obtener los bancos:", error));
   }, []);
@@ -110,7 +126,6 @@ const Home: React.FC = () => {
       const updatedTransactions = prevTransactions.map((trans) =>
         trans.transaccion_id === data.transaccion_id ? data : trans
       );
-
       return updatedTransactions;
     });
 
@@ -118,23 +133,35 @@ const Home: React.FC = () => {
       const updatedFiltered = prevFiltered.map((trans) =>
         trans.transaccion_id === data.transaccion_id ? data : trans
       );
-
       return updatedFiltered;
     });
 
     setTransactionToEdit(null); // Limpiamos la transacción seleccionada
     setOpenEditDialog(false); // Cerramos el diálogo
-    // Llama a fetchBanks para actualizar los bancos
-    fetchBanks();
+    fetchBanks(); // Actualiza los bancos después de modificar la transacción
   };
 
   const filterByBank = (banco: Bank | null) => {
     setSelectedBank(banco);
-    const filtered = banco
-      ? transactions.filter(
-          (transaction) => transaction.banco_id === banco.banco_id // Filtramos por banco_id
-        )
-      : transactions; // Si no hay banco seleccionado, mostramos todas las transacciones
+
+    // Si banco es null, mostrar todas las transacciones
+    if (!banco) {
+      setFilteredTransactions(transactions);
+      return;
+    }
+
+    // Filtrar transacciones por banco seleccionado
+    const filtered = transactions.filter(
+      (transaction) => transaction.banco_id === banco.banco_id
+    );
+
+    if (filtered.length === 0) {
+      console.warn(
+        "No se encontraron transacciones para este banco:",
+        banco.nombre
+      );
+    }
+
     setFilteredTransactions(filtered);
   };
 
@@ -151,10 +178,15 @@ const Home: React.FC = () => {
             (transaction) => transaction.transaccion_id !== transactionToDelete
           );
           setTransactions(updatedTransactions);
-          setFilteredTransactions(updatedTransactions);
+
+          // Reaplica el filtro para mantener las transacciones del banco seleccionado
+          const filtered = updatedTransactions.filter(
+            (transaction) => transaction.banco_id === selectedBank?.banco_id
+          );
+          setFilteredTransactions(filtered);
+
           setOpenConfirmDialog(false);
-          // Llama a fetchBanks para actualizar los bancos
-          fetchBanks();
+          fetchBanks(); // Actualiza los bancos
         })
         .catch((error) =>
           console.error("Error al eliminar la transacción:", error)
@@ -225,6 +257,7 @@ const Home: React.FC = () => {
             saldo_total,
             banco_id,
           }))}
+          selectedBank={selectedBank} // Pasamos el banco seleccionado
           onFilter={(banco) =>
             filterByBank(
               banco ?? { nombre: "Desconocido", saldo_total: 0, banco_id: 0 }

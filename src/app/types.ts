@@ -8,7 +8,9 @@ export interface Transaction {
   tipo: string;
   monto: number | null;
   banco_id: number;
+  cheque_id: number | null;
   nombre_banco: string;
+  numero_cheque?: string | null; // Agrega este campo
 }
 
 export interface CreateTransaction {
@@ -17,6 +19,7 @@ export interface CreateTransaction {
   monto: number | null;
   tipo: string;
   banco_id: number;
+  cheque_id: number | null;
 }
 
 export interface Bank {
@@ -29,4 +32,10 @@ export interface Cliente {
   cliente_id: number;
   nombre: string;
   apellido: string;
+}
+
+export interface Cheque {
+  cliente_id: number;
+  cheque_id: number;
+  numero: number;
 }

@@ -15,22 +15,36 @@ interface Props {
   totalSaldo: number;
 }
 
-const FilterByBank: React.FC<Props> = ({ banks, onFilter, totalSaldo }) => {
+interface Props {
+  banks: Bank[]; // Lista de bancos
+  selectedBank: Bank | null; // Banco seleccionado
+  onFilter: (banco: Bank | null) => void; // Permitir null
+  totalSaldo: number;
+}
+
+const FilterByBank: React.FC<Props> = ({
+  banks,
+  selectedBank,
+  onFilter,
+  totalSaldo,
+}) => {
   const handleChange = (e: SelectChangeEvent<string>) => {
+    console.log(selectedBank);
+    console.log(totalSaldo);
     const selectedBanco = banks.find(
       (banco) => banco.nombre === e.target.value
     );
-    console.log(totalSaldo);
     onFilter(selectedBanco || null); // Pasamos el objeto Bank completo o null
   };
 
   return (
     <FormControl variant="outlined" sx={{ minWidth: 200 }} size="small">
       <InputLabel>Filtrar por banco</InputLabel>
-      <Select label="Filtrar por banco" onChange={handleChange} defaultValue="">
-        <MenuItem value="">
-          <em>Todos los bancos</em>
-        </MenuItem>
+      <Select
+        label="Filtrar por banco"
+        onChange={handleChange}
+        value={selectedBank ? selectedBank.nombre : ""}
+      >
         {banks.length > 0 ? (
           banks.map((banco) => (
             <MenuItem key={banco.banco_id} value={banco.nombre}>

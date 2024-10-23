@@ -12,8 +12,7 @@ import IconButton from "@mui/material/IconButton";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Box } from "@mui/material";
-import CustomLink from "./CustomLink";
+import { Box } from "@mui/material"; // Asegúrate que CustomLink sea un componente bien configurado
 
 const drawerWidth = 240;
 
@@ -82,6 +81,7 @@ const ModernSidebar: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
+  const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null); // Estado para manejar la opción seleccionada
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -89,6 +89,10 @@ const ModernSidebar: React.FC<{ children: React.ReactNode }> = ({
 
   const handleDrawerClose = () => {
     setOpen(false);
+  };
+
+  const handleListItemClick = (index: number) => {
+    setSelectedIndex(index); // Cambiamos el índice seleccionado
   };
 
   return (
@@ -130,12 +134,46 @@ const ModernSidebar: React.FC<{ children: React.ReactNode }> = ({
             marginTop: 2, // Añadimos un margen superior para bajar los elementos
           }}
         >
-          <ListItem component={CustomLink} href="/">
+          <ListItem
+            component="a" // O bien "a" en lugar de "CustomLink" si es necesario
+            href="/"
+            onClick={() => handleListItemClick(0)}
+            sx={{
+              "&:hover": {
+                backgroundColor: "lightgray",
+              },
+              backgroundColor: selectedIndex === 0 ? "lightgray" : "inherit",
+            }}
+          >
             <ListItemText primary="Transacciones" />
           </ListItem>
 
-          <ListItem component={CustomLink} href="/clients">
+          <ListItem
+            component="a"
+            href="/clients"
+            onClick={() => handleListItemClick(1)}
+            sx={{
+              "&:hover": {
+                backgroundColor: "lightgray",
+              },
+              backgroundColor: selectedIndex === 1 ? "lightgray" : "inherit",
+            }}
+          >
             <ListItemText primary="Clientes" />
+          </ListItem>
+
+          <ListItem
+            component="a"
+            href="/banks"
+            onClick={() => handleListItemClick(2)}
+            sx={{
+              "&:hover": {
+                backgroundColor: "lightgray",
+              },
+              backgroundColor: selectedIndex === 2 ? "lightgray" : "inherit",
+            }}
+          >
+            <ListItemText primary="Bancos" />
           </ListItem>
         </List>
       </Drawer>

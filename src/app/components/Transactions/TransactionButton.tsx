@@ -39,6 +39,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
   );
   const [nuevoCliente, setNuevoCliente] = useState<string>("");
   const [clienteOption, setClienteOption] = useState<string>("existente");
+  const [numeroCheque, setNumeroCheque] = useState<string>(""); // Nuevo estado para número de cheque
   const today = new Date().toISOString().split("T")[0]; // Obtén la fecha actual en formato 'YYYY-MM-DD'
   const [transaction, setTransaction] = useState<CreateTransaction>({
     cliente_id: null,
@@ -46,6 +47,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
     fecha: today,
     monto: null,
     tipo: "",
+    cheque_id: null, // Añadimos cheque_id inicializado en null
   });
 
   useEffect(() => {
@@ -70,10 +72,12 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
     const isMontoValid = transaction.monto !== null && transaction.monto > 0;
     const isFechaValid = transaction.fecha.trim() !== "";
 
-    // El cliente solo es obligatorio para transferencia o interdeposito
-    const isClienteValid = ["transferencia", "interdeposito"].includes(
-      transaction.tipo
-    )
+    // El cliente solo es obligatorio para transferencia, interdeposito y pago_cheque
+    const isClienteValid = [
+      "transferencia",
+      "interdeposito",
+      "pago_cheque",
+    ].includes(transaction.tipo)
       ? clienteOption === "nuevo"
         ? nuevoCliente.trim() !== ""
         : selectedCliente !== null
@@ -81,7 +85,17 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
 
     const isBancoValid = selectedBank !== null;
 
-    return isMontoValid && isFechaValid && isClienteValid && isBancoValid;
+    // El número de cheque es obligatorio si el tipo es pago_cheque
+    const isChequeValid =
+      transaction.tipo === "pago_cheque" ? numeroCheque.trim() !== "" : true;
+
+    return (
+      isMontoValid &&
+      isFechaValid &&
+      isClienteValid &&
+      isBancoValid &&
+      isChequeValid
+    );
   };
 
   const handleMontoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,7 +111,37 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
     e: React.ChangeEvent<{ name?: string; value: unknown }>
   ) => {
     const { name, value } = e.target;
-    setTransaction({ ...transaction, [name as string]: value });
+
+    // Actualizar el tipo de transacción
+    setTransaction((prev) => ({ ...prev, [name as string]: value }));
+
+    // Si el campo que cambió es "tipo", limpiamos el cliente si no es "interdeposito", "transferencia" o "pago_cheque"
+    if (name === "tipo") {
+      if (
+        !["interdeposito", "transferencia", "pago_cheque"].includes(
+          value as string
+        )
+      ) {
+        setSelectedCliente(null);
+        setNuevoCliente("");
+      }
+    }
+  };
+
+  const resetForm = () => {
+    setTransaction({
+      cliente_id: null,
+      banco_id: transaction.banco_id, // Mantener el banco seleccionado
+      fecha: today,
+      monto: null,
+      tipo: "", // Reiniciar tipo de transacción
+      cheque_id: null, // Reiniciamos cheque_id a null
+    });
+    setSelectedCliente(null); // Reiniciar cliente seleccionado
+    setNuevoCliente(""); // Reiniciar nuevo cliente
+    setNumeroCheque(""); // Reiniciar número de cheque
+    setClienteOption("existente"); // Volver a la opción de cliente existente por defecto
+    setSelectedBank(initialSelectedBank || null); // Reiniciar banco seleccionado
   };
 
   const handleSubmit = () => {
@@ -106,31 +150,39 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
       return;
     }
 
+    // Crear una transacción con las propiedades faltantes
     const dataToSubmit: Transaction = {
-      transaccion_id: 0,
+      transaccion_id: 0, // Agregamos un ID predeterminado (en el backend se generará el real)
       fecha: transaction.fecha,
       cliente_id:
-        clienteOption === "nuevo"
-          ? null // Si es cliente nuevo, dejamos el cliente_id como null
-          : selectedCliente?.cliente_id || null, // Si es cliente existente, mandamos el cliente_id
+        clienteOption === "nuevo" ? null : selectedCliente?.cliente_id || null,
       nombre_cliente:
         clienteOption === "nuevo"
-          ? nuevoCliente // Nombre del cliente nuevo
-          : selectedCliente?.nombre || "", // Nombre del cliente existente
+          ? nuevoCliente
+          : selectedCliente?.nombre || "", // Asegúrate de incluir nombre_cliente
       tipo: transaction.tipo,
       monto: transaction.monto,
       banco_id: selectedBank?.banco_id || transaction.banco_id,
-      nombre_banco: selectedBank?.nombre || "",
+      nombre_banco: selectedBank?.nombre || "", // Asegúrate de incluir nombre_banco
+      cheque_id:
+        transaction.tipo === "pago_cheque"
+          ? Number(numeroCheque) || null
+          : null,
     };
 
-    if (["transferencia", "interdeposito"].includes(transaction.tipo)) {
+    // Verificación adicional para tipos de transacción específicos
+    if (
+      ["transferencia", "interdeposito", "pago_cheque"].includes(
+        transaction.tipo
+      )
+    ) {
       if (dataToSubmit.cliente_id === null && clienteOption === "existente") {
         alert("Por favor, selecciona un cliente válido.");
         return;
       }
     }
 
-    onSubmit(dataToSubmit);
+    onSubmit(dataToSubmit); // Aquí envías un objeto completo de tipo `Transaction`
     handleClose();
   };
 
@@ -147,6 +199,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
   };
 
   const handleClose = () => {
+    resetForm(); // Reiniciar el formulario después del envío
     setOpen(false);
   };
 
@@ -160,26 +213,23 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
         <DialogContent>
           {/* Autocomplete de Banco */}
           <FormControl fullWidth margin="normal">
-            <Autocomplete
-              options={banks}
-              getOptionLabel={(option) => option.nombre || ""}
-              value={selectedBank}
-              onChange={(event, newValue) => setSelectedBank(newValue)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Banco"
-                  placeholder="Seleccionar banco"
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                />
-              )}
-            />
+            <InputLabel id="banco-label" shrink>
+              Banco
+            </InputLabel>
+            <Select
+              labelId="banco-label"
+              id="banco"
+              name="banco_id"
+              value={selectedBank?.banco_id || ""}
+              disabled // Esto hace que el campo sea solo visible pero no editable
+            >
+              {banks.map((bank) => (
+                <MenuItem key={bank.banco_id} value={bank.banco_id}>
+                  {bank.nombre}
+                </MenuItem>
+              ))}
+            </Select>
           </FormControl>
-
           {/* Tipo de Transacción */}
           <FormControl fullWidth margin="normal" variant="outlined">
             <InputLabel id="tipo-transaccion-label" shrink>
@@ -209,6 +259,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
                 Depósito en Efectivo
               </MenuItem>
               <MenuItem value="retiro_efectivo">Retiro en Efectivo</MenuItem>
+              <MenuItem value="pago_cheque">Pago con Cheque</MenuItem>
             </Select>
           </FormControl>
 
@@ -229,13 +280,10 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
           </FormControl>
 
           {/* Cliente existente o nuevo */}
-          {/* Solo muestra el campo de cliente si no es retiro o depósito en efectivo o gastos de mantenimiento */}
-          {![
-            "retiro_efectivo",
-            "deposito_efectivo",
-            "gastos_mantenimiento",
-            "impuesto",
-          ].includes(transaction.tipo) && (
+          {/* Solo muestra el campo de cliente si es interdeposito, transferencia o pago_cheque */}
+          {["interdeposito", "transferencia", "pago_cheque"].includes(
+            transaction.tipo
+          ) && (
             <>
               <FormControl component="fieldset" margin="normal">
                 <FormLabel component="legend">Cliente</FormLabel>
@@ -287,6 +335,17 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
                 </FormControl>
               )}
             </>
+          )}
+
+          {/* Campo para el número de cheque si el tipo es pago_cheque */}
+          {transaction.tipo === "pago_cheque" && (
+            <FormControl fullWidth margin="normal">
+              <TextField
+                label="Número de Cheque"
+                value={numeroCheque}
+                onChange={(e) => setNumeroCheque(e.target.value)}
+              />
+            </FormControl>
           )}
 
           {/* Monto */}
