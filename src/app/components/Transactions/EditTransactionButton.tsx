@@ -15,8 +15,8 @@ import {
   Radio,
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
-import { Bank, Cliente, Transaction, Cheque } from "../../types";
-import { getClientes, updateTransaction, getCheques } from "../../services/api"; // Importamos la nueva función
+import { Bank, Cliente, Transaction } from "../../types";
+import { getClientes, updateTransaction } from "../../services/api"; // Importamos la nueva función
 import { formatNumber } from "../../../utils/formatNumber";
 
 interface EditTransactionButtonProps {
