@@ -2,16 +2,16 @@ import axios from "axios";
 import { Transaction, CreateTransaction, Bank } from "../types";
 
 // Configura Axios con la baseURL
-const api = axios.create({
-  baseURL: "http://localhost:3001", // Solo la baseURL, sin especificar la ruta completa
-});
-
-// // Configura Axios con la baseURL
 // const api = axios.create({
-//   baseURL: process.env.NEXT_PUBLIC_API_URL, // Solo la baseURL, sin especificar la ruta completa
+//   baseURL: "http://localhost:3001", // Solo la baseURL, sin especificar la ruta completa
 // });
 
-// console.log("Usando API URL:", process.env.NEXT_PUBLIC_API_URL);
+// Configura Axios con la baseURL
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL, // Solo la baseURL, sin especificar la ruta completa
+});
+
+console.log("Usando API URL:", process.env.NEXT_PUBLIC_API_URL);
 
 // Función para obtener transacciones desde el backend
 export const getTransactions = () => {
