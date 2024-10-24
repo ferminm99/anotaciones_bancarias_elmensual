@@ -39,66 +39,42 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
   const [numeroCheque, setNumeroCheque] = useState<number | undefined>(); // Estado para el número de cheque
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [cheques, setCheques] = useState<Cheque[]>([]);
 
   useEffect(() => {
-    // Cargamos los cheques primero
-    getCheques()
-      .then((response) => {
-        setCheques(response.data); // Guardamos los cheques en el estado
-        console.log(cheques);
-        if (transactionToEdit) {
-          // Inicializamos la transacción a editar
-          setTransaction({
-            ...transactionToEdit,
-            fecha: new Date(transactionToEdit.fecha).toISOString().slice(0, 10),
-          });
+    if (transactionToEdit) {
+      // Inicializamos la transacción a editar
+      setTransaction({
+        ...transactionToEdit,
+        fecha: new Date(transactionToEdit.fecha).toISOString().slice(0, 10),
+      });
 
-          const bank = banks.find(
-            (bank) => bank.banco_id === transactionToEdit.banco_id
-          );
-          setSelectedBank(bank || null);
+      const bank = banks.find(
+        (bank) => bank.banco_id === transactionToEdit.banco_id
+      );
+      setSelectedBank(bank || null);
 
+      getClientes()
+        .then((response) => {
+          setClientes(response.data);
           const client = response.data.find(
             (client: Cliente) =>
               client.cliente_id === transactionToEdit.cliente_id
           );
           setSelectedClient(client || null);
+        })
+        .catch((error) => {
+          console.error("Error al cargar los clientes:", error);
+        });
 
-          // Verificamos si la transacción es de tipo 'pago_cheque' y si tiene un cheque asociado
-          if (
-            transactionToEdit.tipo === "pago_cheque" &&
-            transactionToEdit.cheque_id
-          ) {
-            // Buscamos el cheque basado en cheque_id
-            const cheque = response.data.find(
-              (cheque: Cheque) =>
-                cheque.cheque_id === transactionToEdit.cheque_id
-            );
-            setNumeroCheque(cheque?.numero || ""); // Establecemos el número del cheque si se encuentra
-          }
-        }
-      })
-      .catch((error) => {
-        console.error("Error al obtener los cheques:", error);
-      });
-
-    // Cargamos los clientes
-    getClientes()
-      .then((response) => {
-        setClientes(response.data);
-
-        if (transactionToEdit) {
-          const client = response.data.find(
-            (client: Cliente) =>
-              client.cliente_id === transactionToEdit.cliente_id
-          );
-          setSelectedClient(client || null);
-        }
-      })
-      .catch((error) => {
-        console.error("Error al cargar los clientes:", error);
-      });
+      // Si la transacción es de tipo 'pago_cheque', puedes usar el cheque_id
+      if (
+        transactionToEdit.tipo === "pago_cheque" &&
+        transactionToEdit.cheque_id
+      ) {
+        // Solo necesitas el cheque_id en este punto, no es necesario obtener todos los cheques
+        setNumeroCheque(transactionToEdit.cheque_id); // Establecemos el cheque_id
+      }
+    }
   }, [transactionToEdit, banks]);
 
   // Aquí se usa el `useEffect` solo para inicializar los valores cuando `transactionToEdit` cambie.

@@ -105,7 +105,9 @@ const Clientes: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className="max-w-5xl mx-auto px-4">
+      {" "}
+      {/* Ajustamos el ancho y centramos */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Clientes</h1>
         <div className="flex items-center space-x-4">
@@ -119,13 +121,11 @@ const Clientes: React.FC = () => {
           <AddClienteButton onSubmit={handleAddCliente} />
         </div>
       </div>
-
       <ClienteTable
         clientes={filteredClientes.length ? filteredClientes : clientes}
         onEdit={handleEditCliente}
         onDelete={confirmDeleteCliente}
       />
-
       <ConfirmDialog
         open={openConfirmDialog}
         title="Confirmar Eliminación"
@@ -133,7 +133,6 @@ const Clientes: React.FC = () => {
         onConfirm={handleDeleteCliente}
         onCancel={() => setOpenConfirmDialog(false)}
       />
-
       {clienteToEdit && (
         <EditClientButton
           clientToEdit={clienteToEdit}

@@ -8,33 +8,36 @@ import EditBankButton from "../../app/components/Banks/EditBankButton";
 
 const Banks: React.FC = () => {
   const [banks, setBanks] = useState<Bank[]>([]);
+  const [filteredBanks, setFilteredBanks] = useState<Bank[]>([]);
   const [openConfirmDialog, setOpenConfirmDialog] = useState<boolean>(false);
   const [bankToDelete, setBankToDelete] = useState<number | null>(null);
   const [bankToEdit, setBankToEdit] = useState<Bank | null>(null);
   const [openEditDialog, setOpenEditDialog] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>(""); // Para el término de búsqueda
 
   useEffect(() => {
     getBanks()
       .then((response) => {
         setBanks(response.data);
+        setFilteredBanks(response.data); // Inicialmente muestra todos los bancos
       })
       .catch((error) => console.error("Error al obtener los bancos:", error));
   }, []);
 
   const handleAddBank = (data: Omit<Bank, "banco_id">) => {
-    // Verifica si ya existe un banco con el mismo nombre
     const bancoExistente = banks.find(
       (bank) => bank.nombre.toLowerCase() === data.nombre.toLowerCase()
     );
 
     if (bancoExistente) {
       alert("Ya existe un banco con este nombre.");
-      return; // No continuamos si ya existe el banco
+      return;
     }
 
     addBank(data)
       .then((response) => {
         setBanks((prev) => [...prev, response.data]);
+        setFilteredBanks((prev) => [...prev, response.data]);
       })
       .catch((error) => console.error("Error al agregar banco:", error));
   };
@@ -52,6 +55,7 @@ const Banks: React.FC = () => {
             (bank) => bank.banco_id !== bankToDelete
           );
           setBanks(updatedBanks);
+          setFilteredBanks(updatedBanks);
           setOpenConfirmDialog(false);
         })
         .catch((error) => console.error("Error al eliminar el banco:", error));
@@ -64,7 +68,6 @@ const Banks: React.FC = () => {
   };
 
   const handleUpdateBank = (data: Bank) => {
-    // Verifica si ya existe un banco con el mismo nombre y que no sea el mismo banco que estamos editando
     const bancoExistente = banks.find(
       (bank) =>
         bank.nombre.toLowerCase() === data.nombre.toLowerCase() &&
@@ -73,7 +76,7 @@ const Banks: React.FC = () => {
 
     if (bancoExistente) {
       alert("Ya existe otro banco con este nombre.");
-      return; // No continuamos si ya existe el banco con ese nombre
+      return;
     }
 
     setBanks((prevBanks) => {
@@ -82,19 +85,49 @@ const Banks: React.FC = () => {
       );
       return updatedBanks;
     });
+    setFilteredBanks((prevBanks) => {
+      const updatedFilteredBanks = prevBanks.map((bnk) =>
+        bnk.banco_id === data.banco_id ? data : bnk
+      );
+      return updatedFilteredBanks;
+    });
     setBankToEdit(null);
     setOpenEditDialog(false);
   };
 
+  // Función para manejar la búsqueda
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, ""); // Elimina tildes y normaliza el texto
+    setSearchTerm(term);
+
+    const filtered = banks.filter((bank) =>
+      bank.nombre.toLowerCase().includes(term)
+    );
+    setFilteredBanks(filtered);
+  };
+
   return (
-    <div>
+    <div className="max-w-5xl mx-auto px-4">
+      {" "}
+      {/* Ajustamos el ancho y centramos */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Bancos</h1>
-        <AddBankButton onSubmit={handleAddBank} />
+        <div className="flex items-center space-x-4">
+          <input
+            type="text"
+            placeholder="Buscar por nombre del banco..."
+            value={searchTerm}
+            onChange={handleSearch}
+            className="border p-2 rounded h-10 mt-3 w-64" // Ajustamos el tamaño del campo de búsqueda
+          />
+          <AddBankButton onSubmit={handleAddBank} />
+        </div>
       </div>
-      {/* Muestra el error */}
       <BankTable
-        banks={banks}
+        banks={filteredBanks.length ? filteredBanks : banks}
         onEdit={handleEditBank}
         onDelete={confirmDeleteBank}
       />

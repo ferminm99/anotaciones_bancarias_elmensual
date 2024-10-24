@@ -21,7 +21,6 @@ const ClienteTable: React.FC<{
       <Table className="table-auto min-w-full divide-y divide-gray-200">
         <TableHead className="bg-gray-100">
           <TableRow>
-            <TableCell>ID</TableCell>
             <TableCell>Nombre</TableCell>
             <TableCell>Apellido</TableCell>
             <TableCell>Acciones</TableCell>
@@ -30,7 +29,6 @@ const ClienteTable: React.FC<{
         <TableBody className="bg-white divide-y divide-gray-200">
           {clientes.map((cliente) => (
             <TableRow key={cliente.cliente_id}>
-              <TableCell>{cliente.cliente_id}</TableCell>
               <TableCell>{cliente.nombre}</TableCell>
               <TableCell>{cliente.apellido}</TableCell>
               <TableCell>

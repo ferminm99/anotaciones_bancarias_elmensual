@@ -22,7 +22,6 @@ const BankTable: React.FC<{
       <Table className="table-auto min-w-full divide-y divide-gray-200">
         <TableHead className="bg-gray-100">
           <TableRow>
-            <TableCell>ID</TableCell>
             <TableCell>Nombre del Banco</TableCell>
             <TableCell>Saldo Total</TableCell> {/* Nuevo campo */}
             <TableCell>Acciones</TableCell>
@@ -31,7 +30,6 @@ const BankTable: React.FC<{
         <TableBody className="bg-white divide-y divide-gray-200">
           {banks.map((bank) => (
             <TableRow key={bank.banco_id}>
-              <TableCell>{bank.banco_id}</TableCell>
               <TableCell>{bank.nombre}</TableCell>
               <TableCell>{formatNumber(bank.saldo_total)}</TableCell>{" "}
               {/* Mostrar saldo */}

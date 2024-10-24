@@ -25,11 +25,12 @@ const TransactionTable: React.FC<{
             <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
               Fecha
             </TableCell>
-            <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-              Cliente
-            </TableCell>
+
             <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
               Tipo
+            </TableCell>
+            <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+              Cliente
             </TableCell>
             <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
               Monto
@@ -50,9 +51,7 @@ const TransactionTable: React.FC<{
                 <TableCell className="px-6 py-4 whitespace-nowrap">
                   {new Date(transaction.fecha).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="px-6 py-4 whitespace-nowrap">
-                  {transaction.nombre_cliente || " - "}
-                </TableCell>
+
                 <TableCell
                   className={`px-6 py-4 whitespace-nowrap ${
                     transaction.tipo === "cheque_deposito" ||
@@ -76,6 +75,10 @@ const TransactionTable: React.FC<{
                   transaction.numero_cheque ? (
                     <span> (Cheque N°: {transaction.numero_cheque})</span>
                   ) : null}
+                </TableCell>
+
+                <TableCell className="px-6 py-4 whitespace-nowrap">
+                  {transaction.nombre_cliente || " - "}
                 </TableCell>
 
                 <TableCell className="px-6 py-4 whitespace-nowrap">

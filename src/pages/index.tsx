@@ -202,7 +202,13 @@ const Home: React.FC = () => {
 
     setSearchTerm(term);
 
+    // Filtra las transacciones basadas en el banco seleccionado
     const filtered = transactions.filter((transaction) => {
+      // Solo consideramos las transacciones del banco seleccionado
+      if (selectedBank && transaction.banco_id !== selectedBank.banco_id) {
+        return false; // Si no coincide con el banco seleccionado, no la incluimos
+      }
+
       const nombreCliente = transaction.nombre_cliente
         ?.toLowerCase()
         .normalize("NFD")
@@ -221,6 +227,7 @@ const Home: React.FC = () => {
       const monto =
         transaction.monto !== null ? transaction.monto.toString() : "0";
 
+      // Verifica si alguno de los campos contiene el término de búsqueda
       return (
         nombreCliente?.includes(term) ||
         tipo.includes(term) ||
@@ -239,18 +246,15 @@ const Home: React.FC = () => {
     indexOfLastTransaction
   );
 
+  // Dentro de tu return principal
   return (
     <div className="max-w-6xl mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-4xl font-bold text-gray-900">Transacciones</h1>
-        <AddTransactionButton
-          onSubmit={handleAddTransaction}
-          banks={banks}
-          selectedBank={selectedBank ?? undefined}
-        />
       </div>
 
       <div className="flex justify-between items-center mb-4">
+        {/* Filtro por banco */}
         <FilterByBank
           banks={banks.map(({ nombre, saldo_total, banco_id }) => ({
             nombre,
@@ -266,13 +270,22 @@ const Home: React.FC = () => {
           totalSaldo={totalSaldo}
         />
 
-        <input
-          type="text"
-          placeholder="Buscar..."
-          className="border p-2 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          value={searchTerm}
-          onChange={handleSearch}
-        />
+        <div className="flex space-x-4">
+          {/* Input de búsqueda */}
+          <input
+            type="text"
+            placeholder="Buscar..."
+            className="border p-2 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            value={searchTerm}
+            onChange={handleSearch}
+          />
+          {/* Botón de agregar transacción */}
+          <AddTransactionButton
+            onSubmit={handleAddTransaction}
+            banks={banks}
+            selectedBank={selectedBank ?? undefined}
+          />
+        </div>
       </div>
 
       <TransactionTable
