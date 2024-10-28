@@ -39,6 +39,7 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
   const [numeroCheque, setNumeroCheque] = useState<number | undefined>(); // Estado para el número de cheque
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [displayMonto, setDisplayMonto] = useState<string>("");
 
   useEffect(() => {
     if (transactionToEdit) {
@@ -47,10 +48,12 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
         ...transactionToEdit,
         fecha: new Date(transactionToEdit.fecha).toISOString().slice(0, 10),
       });
+      setDisplayMonto(formatNumber(transactionToEdit.monto ?? 0));
 
       const bank = banks.find(
         (bank) => bank.banco_id === transactionToEdit.banco_id
       );
+
       setSelectedBank(bank || null);
 
       getClientes()
@@ -103,12 +106,19 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
   };
 
   const handleMontoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\./g, ""); // Eliminar los puntos antes de procesar
-    const formattedValue = formatNumber(value).toString(); // Asegurarte de que sea string
-    setTransaction(
-      (prev) => (prev ? { ...prev, monto: Number(value) } : prev) // Mantener el valor numérico sin formato
-    );
-    e.target.value = formattedValue; // Actualizar el input con el valor formateado
+    let value = e.target.value;
+
+    // Permitimos solo números y coma para decimales
+    value = value.replace(/[^0-9,]/g, "");
+
+    const [integerPart, decimalPart] = value.split(",");
+    let formattedValue = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    if (decimalPart !== undefined) {
+      formattedValue += `,${decimalPart.slice(0, 2)}`;
+    }
+
+    setDisplayMonto(formattedValue);
   };
 
   const isFormValid = () => {
@@ -158,6 +168,11 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
     }
 
     if (transaction) {
+      const montoNumerico = parseFloat(
+        displayMonto.replace(/\./g, "").replace(",", ".")
+      );
+
+      transaction.monto = montoNumerico;
       const cliente = clienteOption === "nuevo" ? nuevoCliente : selectedClient;
       const updatedTransaction = {
         ...transaction,
@@ -269,9 +284,8 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
                 label="Monto"
                 type="text"
                 name="monto"
-                value={transaction.monto ? formatNumber(transaction.monto) : ""}
+                value={displayMonto} // Usamos `displayMonto` para visualización
                 onChange={handleMontoChange}
-                InputLabelProps={{ shrink: true }}
               />
             </FormControl>
 

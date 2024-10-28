@@ -22,13 +22,13 @@ const EditBankButton: React.FC<EditBankButtonProps> = ({
   onClose,
 }) => {
   const [bank, setBank] = useState<Bank | null>(null);
-  const [newSaldoTotal, setNewSaldoTotal] = useState<number>(0);
+  const [newSaldoTotal, setNewSaldoTotal] = useState<string>(""); // Cambiamos a string para manejar el formato en tiempo real
   const [confirmChange, setConfirmChange] = useState<boolean>(false);
 
   useEffect(() => {
     if (bankToEdit) {
       setBank(bankToEdit);
-      setNewSaldoTotal(bankToEdit.saldo_total || 0); // Guardamos el saldo numérico directamente
+      setNewSaldoTotal(formatNumber(bankToEdit.saldo_total.toString())); // Inicializamos con el saldo formateado
     }
   }, [bankToEdit]);
 
@@ -38,20 +38,41 @@ const EditBankButton: React.FC<EditBankButtonProps> = ({
   };
 
   const handleSaldoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Elimina todo lo que no sea número y convierte a número
-    const value = e.target.value.replace(/\D/g, "");
-    setNewSaldoTotal(Number(value)); // Guardamos el valor numérico sin formatear
+    let value = e.target.value;
+
+    // Permitimos solo números y una coma para los decimales
+    value = value.replace(/[^0-9,]/g, "");
+
+    // Dividimos en parte entera y decimal
+    const [integerPart, decimalPart] = value.split(",");
+
+    // Formateamos la parte entera con puntos de miles
+    let formattedValue = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    // Agregamos la parte decimal, limitándola a dos dígitos
+    if (decimalPart !== undefined) {
+      formattedValue += `,${decimalPart.slice(0, 2)}`;
+    }
+
+    setNewSaldoTotal(formattedValue);
   };
 
   const handleSubmit = () => {
     if (bank) {
-      onSubmit({ ...bank, saldo_total: newSaldoTotal });
+      // Convertimos el saldo a número antes de enviarlo
+      const saldoNumerico = parseFloat(
+        newSaldoTotal.replace(/\./g, "").replace(",", ".")
+      );
+      onSubmit({ ...bank, saldo_total: saldoNumerico });
     }
   };
 
   const handleConfirmChange = () => {
     if (bank) {
-      onSubmit({ ...bank, saldo_total: newSaldoTotal });
+      const saldoNumerico = parseFloat(
+        newSaldoTotal.replace(/\./g, "").replace(",", ".")
+      );
+      onSubmit({ ...bank, saldo_total: saldoNumerico });
     }
     setConfirmChange(false);
   };
@@ -74,12 +95,12 @@ const EditBankButton: React.FC<EditBankButtonProps> = ({
               />
               <TextField
                 label="Saldo Total"
-                type="text" // Cambiamos a texto para permitir el formato
-                value={formatNumber(newSaldoTotal.toString())} // Mostramos el saldo formateado
-                onChange={handleSaldoChange} // Guardamos el valor numérico sin formatear
+                type="text"
+                value={newSaldoTotal} // Mostramos el saldo formateado en tiempo real
+                onChange={handleSaldoChange}
                 fullWidth
                 margin="normal"
-                inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }} // Forzamos que solo acepte números
+                inputProps={{ inputMode: "decimal", pattern: "[0-9,]*" }}
               />
             </>
           )}

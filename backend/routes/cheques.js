@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db"); // Asumo que este archivo ya contiene la conexión a PostgreSQL
+const authenticateToken = require("../middleware/auth");
 
 // Ruta para obtener todos los cheques
-router.get("/", (req, res) => {
+router.get("/", authenticateToken, (req, res) => {
   const query = "SELECT * FROM cheques";
   connection.query(query, (err, result) => {
     if (err) {
@@ -16,7 +17,7 @@ router.get("/", (req, res) => {
 });
 
 // Ruta para agregar un nuevo cheque
-router.post("/", (req, res) => {
+router.post("/", authenticateToken, (req, res) => {
   const { numero } = req.body;
   if (!numero) {
     res.status(400).send("Número de cheque es requerido");

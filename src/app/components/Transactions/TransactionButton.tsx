@@ -18,7 +18,6 @@ import {
 import Autocomplete from "@mui/material/Autocomplete";
 import { getClientes } from "../../services/api";
 import { Bank, Cliente, Transaction, CreateTransaction } from "../../types";
-import { formatNumber } from "../../../utils/formatNumber";
 
 interface TransactionButtonProps {
   onSubmit: (data: Transaction) => void;
@@ -49,6 +48,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
     tipo: "",
     cheque_id: null, // Añadimos cheque_id inicializado en null
   });
+  const [displayMonto, setDisplayMonto] = useState<string>(""); // Para visualización
 
   useEffect(() => {
     getClientes()
@@ -69,9 +69,12 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
   }, [initialSelectedBank]);
 
   const isFormValid = () => {
-    const isMontoValid = transaction.monto !== null && transaction.monto > 0;
+    const montoNumerico = parseFloat(
+      displayMonto.replace(/\./g, "").replace(",", ".")
+    );
+    const isMontoValid = montoNumerico !== null && montoNumerico > 0;
     const isFechaValid = transaction.fecha.trim() !== "";
-
+    console.log(isMontoValid);
     // El cliente solo es obligatorio para transferencia, interdeposito y pago_cheque
     const isClienteValid = [
       "transferencia",
@@ -99,12 +102,24 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
   };
 
   const handleMontoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\./g, ""); // Eliminar los puntos antes de procesar
-    const formattedValue = formatNumber(value).toString(); // Asegurarse de que sea string
-    setTransaction(
-      (prev) => (prev ? { ...prev, monto: Number(value) } : prev) // Mantener el valor numérico sin formato
-    );
-    e.target.value = formattedValue; // Actualizar el input con el valor formateado
+    let value = e.target.value;
+
+    // Solo permitimos números y coma
+    value = value.replace(/[^0-9,]/g, "");
+
+    // Dividimos en parte entera y parte decimal
+    const [integerPart, decimalPart] = value.split(",");
+
+    // Formateamos la parte entera con puntos
+    let formattedValue = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    // Agregamos la parte decimal, limitándola a dos dígitos si existe
+    if (decimalPart !== undefined) {
+      formattedValue += `,${decimalPart.slice(0, 2)}`; // Limita a dos dígitos después de la coma
+    }
+
+    // Actualizamos el estado solo para visualización
+    setDisplayMonto(formattedValue);
   };
 
   const handleChange = (
@@ -137,6 +152,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
       tipo: "", // Reiniciar tipo de transacción
       cheque_id: null, // Reiniciamos cheque_id a null
     });
+    setDisplayMonto("");
     setSelectedCliente(null); // Reiniciar cliente seleccionado
     setNuevoCliente(""); // Reiniciar nuevo cliente
     setNumeroCheque(""); // Reiniciar número de cheque
@@ -150,6 +166,11 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
       return;
     }
 
+    // Convertimos `displayMonto` a número antes de enviarlo
+    const montoNumerico = parseFloat(
+      displayMonto.replace(/\./g, "").replace(",", ".")
+    );
+
     // Crear una transacción con las propiedades faltantes
     const dataToSubmit: Transaction = {
       transaccion_id: 0, // Agregamos un ID predeterminado (en el backend se generará el real)
@@ -161,7 +182,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
           ? nuevoCliente
           : selectedCliente?.nombre || "", // Asegúrate de incluir nombre_cliente
       tipo: transaction.tipo,
-      monto: transaction.monto,
+      monto: montoNumerico,
       banco_id: selectedBank?.banco_id || transaction.banco_id,
       nombre_banco: selectedBank?.nombre || "", // Asegúrate de incluir nombre_banco
       cheque_id:
@@ -352,10 +373,11 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
           <FormControl fullWidth margin="normal">
             <TextField
               label="Monto"
-              type="text" // Cambiar a `text` para poder mostrar los puntos
+              type="text"
               name="monto"
-              value={transaction.monto ? formatNumber(transaction.monto) : ""} // Formatear el valor
-              onChange={handleMontoChange} // Usar el nuevo handler
+              value={displayMonto} // Mostramos solo el valor de visualización
+              onChange={handleMontoChange}
+              inputProps={{ inputMode: "decimal", pattern: "[0-9,]*" }}
             />
           </FormControl>
         </DialogContent>

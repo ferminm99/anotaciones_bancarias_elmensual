@@ -6,6 +6,7 @@ const transactionsRoutes = require("./routes/transactions");
 const banksRoutes = require("./routes/banks");
 const clientsRoutes = require("./routes/clients");
 const chequesRoutes = require("./routes/cheques");
+const authRoutes = require("./routes/auth");
 const app = express();
 app.use(express.json()); // Para manejar JSON en las peticiones
 
@@ -29,6 +30,7 @@ app.use("/transacciones", transactionsRoutes);
 app.use("/bancos", banksRoutes);
 app.use("/clientes", clientsRoutes);
 app.use("/cheques", chequesRoutes);
+app.use("/auth", authRoutes);
 
 // Aquí puedes agregar un log para confirmar que las rutas se han registrado
 console.log("Rutas registradas: /transacciones, /bancos, /clientes");

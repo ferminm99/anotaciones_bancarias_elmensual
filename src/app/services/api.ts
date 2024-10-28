@@ -1,15 +1,15 @@
 import axios from "axios";
 import { Transaction, CreateTransaction, Bank } from "../types";
 
-// Configura Axios con la baseURL
-// const api = axios.create({
-//   baseURL: "http://localhost:3001", // Solo la baseURL, sin especificar la ruta completa
-// });
-
-// Configura Axios con la baseURL
+//Configura Axios con la baseURL
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL, // Solo la baseURL, sin especificar la ruta completa
+  baseURL: "http://localhost:3001", // Solo la baseURL, sin especificar la ruta completa
 });
+
+// // Configura Axios con la baseURL
+// const api = axios.create({
+//   baseURL: process.env.NEXT_PUBLIC_API_URL, // Solo la baseURL, sin especificar la ruta completa
+// });
 
 console.log("Usando API URL:", process.env.NEXT_PUBLIC_API_URL);
 
@@ -77,3 +77,27 @@ export const deleteCliente = (id: number) => {
 export const getCheques = () => {
   return api.get("/cheques"); // Usa la baseURL y agrega la ruta relativa
 };
+
+//autenticacion
+export const login = async (
+  username: string,
+  password: string
+): Promise<string> => {
+  try {
+    const response = await api.post("/auth/login", { username, password });
+    console.log("Response from backend:", response.data); // Verifica la respuesta del backend
+    return response.data.token; // Asegúrate de que `token` exista en la respuesta del backend
+  } catch (error) {
+    console.error("Error en la autenticación:", error);
+    throw new Error("Error en la autenticación");
+  }
+};
+
+//Interceptor para proteger solicitudes
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});

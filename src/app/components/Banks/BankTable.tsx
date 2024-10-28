@@ -23,7 +23,7 @@ const BankTable: React.FC<{
         <TableHead className="bg-gray-100">
           <TableRow>
             <TableCell>Nombre del Banco</TableCell>
-            <TableCell>Saldo Total</TableCell> {/* Nuevo campo */}
+            <TableCell>Saldo Total</TableCell>
             <TableCell>Acciones</TableCell>
           </TableRow>
         </TableHead>
@@ -31,8 +31,7 @@ const BankTable: React.FC<{
           {banks.map((bank) => (
             <TableRow key={bank.banco_id}>
               <TableCell>{bank.nombre}</TableCell>
-              <TableCell>{formatNumber(bank.saldo_total)}</TableCell>{" "}
-              {/* Mostrar saldo */}
+              <TableCell>{formatNumber(bank.saldo_total)}</TableCell>
               <TableCell>
                 <IconButton
                   onClick={() => onEdit(bank)}

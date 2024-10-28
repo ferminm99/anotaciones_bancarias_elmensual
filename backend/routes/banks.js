@@ -2,9 +2,10 @@
 const express = require("express");
 const router = express.Router();
 const connection = require("../db");
+const authenticateToken = require("../middleware/auth");
 
 // Ruta para obtener todos los bancos
-router.get("/", (req, res) => {
+router.get("/", authenticateToken, (req, res) => {
   const query = "SELECT * FROM bancos";
   connection.query(query, (err, results) => {
     if (err) {
@@ -17,7 +18,7 @@ router.get("/", (req, res) => {
 });
 
 // Ruta para agregar un banco
-router.post("/", (req, res) => {
+router.post("/", authenticateToken, (req, res) => {
   const { nombre, saldo_total } = req.body;
 
   // Consulta para verificar si el banco ya existe
@@ -52,7 +53,7 @@ router.post("/", (req, res) => {
 });
 
 // Ruta para actualizar un banco
-router.put("/:id", (req, res) => {
+router.put("/:id", authenticateToken, (req, res) => {
   const { id } = req.params;
   const { nombre, saldo_total } = req.body;
 
@@ -89,7 +90,7 @@ router.put("/:id", (req, res) => {
 });
 
 // Ruta para eliminar un banco
-router.delete("/:id", (req, res) => {
+router.delete("/:id", authenticateToken, (req, res) => {
   const { id } = req.params;
   const query = "DELETE FROM bancos WHERE banco_id = $1";
   connection.query(query, [id], (err, result) => {

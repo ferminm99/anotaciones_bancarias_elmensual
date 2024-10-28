@@ -5,6 +5,7 @@ import AddBankButton from "../../app/components/Banks/AddBankButton";
 import ConfirmDialog from "../../app/components/ConfirmDialog";
 import { Bank } from "../../app/types";
 import EditBankButton from "../../app/components/Banks/EditBankButton";
+import { updateBank } from "../../app/services/api"; // Importa la función que realiza la solicitud al backend
 
 const Banks: React.FC = () => {
   const [banks, setBanks] = useState<Bank[]>([]);
@@ -18,8 +19,11 @@ const Banks: React.FC = () => {
   useEffect(() => {
     getBanks()
       .then((response) => {
-        setBanks(response.data);
-        setFilteredBanks(response.data); // Inicialmente muestra todos los bancos
+        const sortedBanks = response.data.sort((a: Bank, b: Bank) =>
+          a.nombre.localeCompare(b.nombre)
+        );
+        setBanks(sortedBanks);
+        setFilteredBanks(sortedBanks);
       })
       .catch((error) => console.error("Error al obtener los bancos:", error));
   }, []);
@@ -80,20 +84,34 @@ const Banks: React.FC = () => {
       return;
     }
 
+    // Actualizamos el estado local con los valores de `data` antes de llamar al backend
     setBanks((prevBanks) => {
       const updatedBanks = prevBanks.map((bnk) =>
-        bnk.banco_id === data.banco_id ? data : bnk
+        bnk.banco_id === data.banco_id
+          ? { ...bnk, nombre: data.nombre, saldo_total: data.saldo_total } // Utilizamos `data.nombre` y `data.saldo_total` directamente
+          : bnk
       );
-      return updatedBanks;
+      return updatedBanks.sort((a, b) => a.nombre.localeCompare(b.nombre));
     });
+
     setFilteredBanks((prevBanks) => {
       const updatedFilteredBanks = prevBanks.map((bnk) =>
-        bnk.banco_id === data.banco_id ? data : bnk
+        bnk.banco_id === data.banco_id
+          ? { ...bnk, nombre: data.nombre, saldo_total: data.saldo_total } // Actualizamos ambos valores en `filteredBanks`
+          : bnk
       );
-      return updatedFilteredBanks;
+      return updatedFilteredBanks.sort((a, b) =>
+        a.nombre.localeCompare(b.nombre)
+      );
     });
-    setBankToEdit(null);
-    setOpenEditDialog(false);
+
+    // Llamada al backend para actualizar el banco
+    updateBank(data.banco_id, data)
+      .then(() => {
+        setBankToEdit(null);
+        setOpenEditDialog(false);
+      })
+      .catch((error) => console.error("Error al actualizar el banco:", error));
   };
 
   // Función para manejar la búsqueda

@@ -16,32 +16,46 @@ interface AddBankButtonProps {
 const AddBankButton: React.FC<AddBankButtonProps> = ({ onSubmit }) => {
   const [open, setOpen] = useState(false);
   const [nombre, setNombre] = useState<string>("");
-  const [saldoTotal, setSaldoTotal] = useState<number>(0); // Mantiene el valor numérico directamente
+  const [saldoTotal, setSaldoTotal] = useState<string>("");
 
   const handleClickOpen = () => setOpen(true);
 
   const handleClose = () => {
     setOpen(false);
     setNombre("");
-    setSaldoTotal(0);
+    setSaldoTotal("");
   };
 
   const handleMontoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Eliminamos cualquier carácter que no sea un número
-    const value = e.target.value.replace(/\D/g, "");
+    let value = e.target.value;
 
-    // Convertimos el valor a número, y si está vacío, lo mantenemos como 0
-    setSaldoTotal(value ? Number(value) : 0);
+    // Solo permitimos números y coma
+    value = value.replace(/[^0-9,]/g, "");
+
+    // Dividimos en parte entera y parte decimal
+    const [integerPart, decimalPart] = value.split(",");
+
+    // Formateamos la parte entera con puntos
+    let formattedValue = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    // Agregamos la parte decimal, limitándola a dos dígitos si existe
+    if (decimalPart !== undefined) {
+      formattedValue += `,${decimalPart.slice(0, 2)}`; // Limita a dos dígitos después de la coma
+    }
+
+    setSaldoTotal(formattedValue);
   };
 
   const handleSubmit = () => {
-    if (!nombre || saldoTotal <= 0) {
+    const saldoNumerico = parseFloat(
+      saldoTotal.replace(/\./g, "").replace(",", ".")
+    );
+    if (!nombre || saldoNumerico <= 0) {
       alert("Por favor, completa todos los campos.");
       return;
     }
 
-    // Enviamos el valor numérico directamente
-    onSubmit({ nombre, saldo_total: saldoTotal });
+    onSubmit({ nombre, saldo_total: saldoNumerico });
     handleClose();
   };
 
@@ -66,11 +80,11 @@ const AddBankButton: React.FC<AddBankButtonProps> = ({ onSubmit }) => {
           <TextField
             margin="dense"
             label="Saldo Inicial"
-            type="text" // Cambiado a texto para formatear la visualización
+            type="text"
             fullWidth
-            value={formatNumber(saldoTotal.toString())} // Formateamos solo al mostrar
+            value={saldoTotal} // Mostramos el saldo formateado en tiempo real
             onChange={handleMontoChange}
-            inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }} // Solo acepta números
+            inputProps={{ inputMode: "decimal", pattern: "[0-9,]*" }}
           />
         </DialogContent>
         <DialogActions>
