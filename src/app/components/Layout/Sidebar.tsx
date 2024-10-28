@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useState } from "react";
 import { styled, useTheme, Theme, CSSObject } from "@mui/material/styles";
 import MuiDrawer from "@mui/material/Drawer";
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
@@ -12,7 +12,10 @@ import IconButton from "@mui/material/IconButton";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Box } from "@mui/material"; // Asegúrate que CustomLink sea un componente bien configurado
+import AccountCircleIcon from "@mui/icons-material/AccountCircle"; // Icono de cuenta
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import { Box } from "@mui/material";
 
 const drawerWidth = 240;
 
@@ -80,8 +83,9 @@ const ModernSidebar: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
-  const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null); // Estado para manejar la opción seleccionada
+  const [open, setOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -92,7 +96,21 @@ const ModernSidebar: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const handleListItemClick = (index: number) => {
-    setSelectedIndex(index); // Cambiamos el índice seleccionado
+    setSelectedIndex(index);
+  };
+
+  // Manejador de apertura y cierre de menú de cuenta
+  const handleAccountClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleAccountClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // Elimina el token del almacenamiento
+    window.location.href = "/login"; // Redirige al login
   };
 
   return (
@@ -109,16 +127,32 @@ const ModernSidebar: React.FC<{ children: React.ReactNode }> = ({
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Panel de Control
           </Typography>
+          <IconButton
+            color="inherit"
+            onClick={handleAccountClick}
+            aria-controls="account-menu"
+            aria-haspopup="true"
+          >
+            <AccountCircleIcon />
+          </IconButton>
+          <Menu
+            id="account-menu"
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleAccountClose}
+          >
+            <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
+          </Menu>
         </Toolbar>
       </AppBar>
       <Drawer
         variant="permanent"
         open={open}
         onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)} // Sidebar se cierra cuando se deja de hacer hover
+        onMouseLeave={() => setOpen(false)}
       >
         <div>
           <IconButton onClick={handleDrawerClose}>
@@ -129,13 +163,9 @@ const ModernSidebar: React.FC<{ children: React.ReactNode }> = ({
             )}
           </IconButton>
         </div>
-        <List
-          sx={{
-            marginTop: 2, // Añadimos un margen superior para bajar los elementos
-          }}
-        >
+        <List sx={{ marginTop: 2 }}>
           <ListItem
-            component="a" // O bien "a" en lugar de "CustomLink" si es necesario
+            component="a"
             href="/"
             onClick={() => handleListItemClick(0)}
             sx={{
@@ -147,7 +177,6 @@ const ModernSidebar: React.FC<{ children: React.ReactNode }> = ({
           >
             <ListItemText primary="Transacciones" />
           </ListItem>
-
           <ListItem
             component="a"
             href="/clients"
@@ -161,7 +190,6 @@ const ModernSidebar: React.FC<{ children: React.ReactNode }> = ({
           >
             <ListItemText primary="Clientes" />
           </ListItem>
-
           <ListItem
             component="a"
             href="/banks"
