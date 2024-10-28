@@ -7,7 +7,6 @@ import {
   DialogTitle,
   TextField,
 } from "@mui/material";
-import { formatNumber } from "../../../utils/formatNumber";
 
 interface AddBankButtonProps {
   onSubmit: (data: { nombre: string; saldo_total: number }) => void;

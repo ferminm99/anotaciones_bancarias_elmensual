@@ -21,10 +21,11 @@ function MyApp({ Component, pageProps }: AppProps) {
 
     if (token) {
       try {
-        const decoded = jwt_decode(token); // verifica si el token es válido
+        const decoded = jwt_decode(token);
+        console.log(decoded); // verifica si el token es válido
         setIsAuthenticated(true); // Si el token es válido, establece autenticación en true
       } catch (error) {
-        console.error("Token inválido");
+        console.error("Token inválido", error);
         setIsAuthenticated(false);
         localStorage.removeItem("token"); // Elimina el token inválido
         router.push("/login");
