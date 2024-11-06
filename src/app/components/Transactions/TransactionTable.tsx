@@ -12,6 +12,19 @@ import Paper from "@mui/material/Paper";
 import { Transaction } from "../../types";
 import { formatNumber } from "../../../utils/formatNumber";
 
+// Mapa de clases Tailwind para los diferentes tipos de transacción
+const tipoColorMap: { [key: string]: string } = {
+  cheque_deposito: "text-green-600",
+  deposito_efectivo: "text-green-600",
+  interdeposito: "text-green-600",
+  transferencia: "text-red-600",
+  retiro_cheque: "text-blue-600",
+  pago_cheque: "text-red-600",
+  impuesto: "text-red-600",
+  gastos_mantenimiento: "text-red-600",
+  retiro_efectivo: "text-red-600",
+};
+
 const TransactionTable: React.FC<{
   transactions: Transaction[];
   onEdit: (transaction: Transaction) => void;
@@ -25,7 +38,6 @@ const TransactionTable: React.FC<{
             <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
               Fecha
             </TableCell>
-
             <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
               Tipo
             </TableCell>
@@ -35,77 +47,56 @@ const TransactionTable: React.FC<{
             <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
               Monto
             </TableCell>
-            {/* <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-              Banco
-            </TableCell> */}
             <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
               Acciones
             </TableCell>
           </TableRow>
         </TableHead>
         <TableBody className="bg-white divide-y divide-gray-200">
-          {transactions.map((transaction) => {
-            console.log("Transaction data: ", transaction); // Añadir log aquí para revisar si `numero_cheque` llega correctamente
-            return (
-              <TableRow key={transaction.transaccion_id}>
-                <TableCell className="px-6 py-4 whitespace-nowrap">
-                  {new Date(transaction.fecha).toLocaleDateString()}
-                </TableCell>
-
-                <TableCell
-                  className={`px-6 py-4 whitespace-nowrap ${
-                    transaction.tipo === "cheque_deposito" ||
-                    transaction.tipo === "deposito_efectivo" ||
-                    transaction.tipo === "interdeposito"
-                      ? "text-green-500"
-                      : transaction.tipo === "transferencia"
-                      ? "text-red-500"
-                      : transaction.tipo === "retiro_cheque"
-                      ? "text-blue-500"
-                      : transaction.tipo === "pago_cheque" ||
-                        transaction.tipo === "impuesto" ||
-                        transaction.tipo === "gastos_mantenimiento" ||
-                        transaction.tipo === "retiro_efectivo"
-                      ? "text-red-500" // Diferente tono de rojo
-                      : ""
-                  }`}
+          {transactions.map((transaction) => (
+            <TableRow key={transaction.transaccion_id}>
+              <TableCell className="px-6 py-4 whitespace-nowrap">
+                {new Date(transaction.fecha).toLocaleDateString()}
+              </TableCell>
+              <TableCell
+                className={`px-6 py-4 whitespace-nowrap ${
+                  tipoColorMap[transaction.tipo] || "text-gray-500"
+                }`}
+              >
+                {transaction.tipo}
+                {transaction.tipo === "pago_cheque" &&
+                transaction.numero_cheque ? (
+                  <span> (Cheque N°: {transaction.numero_cheque})</span>
+                ) : null}
+              </TableCell>
+              <TableCell className="px-6 py-4 whitespace-nowrap">
+                {transaction.nombre_cliente
+                  ? transaction.nombre_cliente.replace("null", "")
+                  : " - "}
+              </TableCell>
+              <TableCell className="px-6 py-4 whitespace-nowrap">
+                {transaction.monto !== null
+                  ? formatNumber(transaction.monto)
+                  : "-"}
+              </TableCell>
+              <TableCell className="px-6 py-4 whitespace-nowrap">
+                <IconButton
+                  onClick={() => onEdit(transaction)}
+                  aria-label="edit"
+                  className="text-gray-500 hover:text-blue-500"
                 >
-                  {transaction.tipo}
-                  {transaction.tipo === "pago_cheque" &&
-                  transaction.numero_cheque ? (
-                    <span> (Cheque N°: {transaction.numero_cheque})</span>
-                  ) : null}
-                </TableCell>
-
-                <TableCell className="px-6 py-4 whitespace-nowrap">
-                  {transaction.nombre_cliente || " - "}
-                </TableCell>
-
-                <TableCell className="px-6 py-4 whitespace-nowrap">
-                  {transaction.monto !== null
-                    ? formatNumber(transaction.monto)
-                    : "-"}
-                </TableCell>
-
-                <TableCell className="px-6 py-4 whitespace-nowrap">
-                  <IconButton
-                    onClick={() => onEdit(transaction)}
-                    aria-label="edit"
-                    className="text-gray-500 hover:text-blue-500"
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => onDelete(transaction.transaccion_id)}
-                    aria-label="delete"
-                    className="text-gray-500 hover:text-red-500"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            );
-          })}
+                  <EditIcon />
+                </IconButton>
+                <IconButton
+                  onClick={() => onDelete(transaction.transaccion_id)}
+                  aria-label="delete"
+                  className="text-gray-500 hover:text-red-500"
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </TableContainer>

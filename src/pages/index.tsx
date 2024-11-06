@@ -49,10 +49,9 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    // Obtener los bancos
     getBanks()
       .then((response) => {
-        const bancos = response.data;
+        const bancos: Bank[] = response.data;
         setBanks(bancos);
 
         const saldoTotal = bancos.reduce(
@@ -61,28 +60,42 @@ const Home: React.FC = () => {
         );
         setTotalSaldo(saldoTotal);
 
-        // Si hay bancos, selecciona el primero
-        if (bancos.length > 0) {
-          const firstBank = bancos[0]; // Primer banco seleccionado
+        const savedBank = localStorage.getItem("selectedBank");
+        const firstBank: Bank = savedBank ? JSON.parse(savedBank) : bancos[0];
+
+        if (firstBank) {
           setSelectedBank(firstBank);
 
-          // Ahora obtener las transacciones
           getTransactions()
             .then((response) => {
+              // Ordena las transacciones por fecha y transaccion_id
               const orderedTransactions = response.data.sort(
-                (a: Transaction, b: Transaction) =>
-                  new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+                (a: Transaction, b: Transaction) => {
+                  const dateComparison =
+                    new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+                  if (dateComparison === 0) {
+                    // Si las fechas son iguales, ordenar por transaccion_id descendente
+                    return b.transaccion_id - a.transaccion_id;
+                  }
+                  return dateComparison;
+                }
+              );
+
+              // Verifica el orden en la consola
+              console.log(
+                "Transacciones ordenadas por fecha y hora:",
+                orderedTransactions
               );
 
               setTransactions(orderedTransactions);
 
-              // Filtrar las transacciones por el primer banco seleccionado
+              // Filtrar las transacciones por el banco seleccionado
               const filtered = orderedTransactions.filter(
                 (transaction: Transaction) =>
                   transaction.banco_id === firstBank.banco_id
               );
 
-              setFilteredTransactions(filtered); // Actualizar las transacciones filtradas
+              setFilteredTransactions(filtered);
             })
             .catch((error) =>
               console.error("Error al obtener las transacciones:", error)
@@ -100,13 +113,38 @@ const Home: React.FC = () => {
         );
         const newTransaction = {
           ...response.data,
-          nombre_cliente: response.data.nombre_cliente || " - ",
+          nombre_cliente: `${response.data.nombre_cliente}`,
           nombre_banco: bancoEncontrado ? bancoEncontrado.nombre : "SIN BANCO",
         };
+        console.log("Nueva transacción agregada:", newTransaction);
 
-        setTransactions((prev) => [...prev, newTransaction]);
-        setFilteredTransactions((prev) => [...prev, newTransaction]);
-        // Llama a fetchBanks para actualizar los bancos
+        setTransactions((prev) => {
+          const updatedTransactions = [newTransaction, ...prev].sort(
+            (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+          );
+          console.log(
+            "Transacciones después de agregar y ordenar:",
+            updatedTransactions
+          );
+          return updatedTransactions;
+        });
+
+        setFilteredTransactions((prev) => {
+          const updatedFiltered = [newTransaction, ...prev]
+            .filter(
+              (transaction) => transaction.banco_id === selectedBank?.banco_id
+            )
+            .sort(
+              (a, b) =>
+                new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+            );
+          console.log(
+            "Transacciones filtradas después de agregar:",
+            updatedFiltered
+          );
+          return updatedFiltered;
+        });
+
         fetchBanks();
       })
       .catch((error) =>
@@ -144,6 +182,13 @@ const Home: React.FC = () => {
   const filterByBank = (banco: Bank | null) => {
     setSelectedBank(banco);
 
+    // Guarda el banco seleccionado en localStorage
+    if (banco) {
+      localStorage.setItem("selectedBank", JSON.stringify(banco));
+    } else {
+      localStorage.removeItem("selectedBank");
+    }
+
     // Si banco es null, mostrar todas las transacciones
     if (!banco) {
       setFilteredTransactions(transactions);
@@ -154,13 +199,6 @@ const Home: React.FC = () => {
     const filtered = transactions.filter(
       (transaction) => transaction.banco_id === banco.banco_id
     );
-
-    if (filtered.length === 0) {
-      console.warn(
-        "No se encontraron transacciones para este banco:",
-        banco.nombre
-      );
-    }
 
     setFilteredTransactions(filtered);
   };

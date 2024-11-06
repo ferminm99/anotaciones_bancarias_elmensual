@@ -31,7 +31,9 @@ router.post("/register", async (req, res) => {
 
 // Login de usuario
 router.post("/login", async (req, res) => {
+  console.log("Iniciando autenticación"); // Primer paso
   const { username, password } = req.body;
+  console.log("Datos recibidos:", username, password); // Log datos
 
   try {
     // Obtener el usuario de la base de datos
