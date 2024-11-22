@@ -94,7 +94,7 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
     // Si el campo que cambió es "tipo", limpiamos el cliente y cheque si no es interdeposito, transferencia o pago_cheque
     if (name === "tipo") {
       if (
-        !["interdeposito", "transferencia", "pago_cheque"].includes(
+        !["interdeposito", "transferencia", "pago_cheque", "pago"].includes(
           value as string
         )
       ) {
@@ -136,6 +136,7 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
       "transferencia",
       "interdeposito",
       "pago_cheque",
+      "pago",
     ].includes(transaction?.tipo || "")
       ? clienteOption === "nuevo"
         ? nuevoCliente.trim() !== ""
@@ -265,6 +266,7 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
                 </MenuItem>
                 <MenuItem value="retiro_efectivo">Retiro en Efectivo</MenuItem>
                 <MenuItem value="pago_cheque">Pago con Cheque</MenuItem>
+                <MenuItem value="pago">Servicio de Pago</MenuItem>
               </Select>
             </FormControl>
 
@@ -290,7 +292,7 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
             </FormControl>
 
             {/* Mostrar los campos de cliente solo si es transferencia, interdeposito o pago_cheque */}
-            {["interdeposito", "transferencia", "pago_cheque"].includes(
+            {["interdeposito", "transferencia", "pago_cheque", "pago"].includes(
               transaction.tipo
             ) && (
               <>
@@ -318,7 +320,9 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
                     <Autocomplete
                       options={clientes}
                       getOptionLabel={(option) =>
-                        `${option.nombre} ${option.apellido}`
+                        `${option.nombre}${
+                          option.apellido ? ` ${option.apellido}` : ""
+                        }`
                       }
                       value={selectedClient}
                       onChange={(event, newValue) =>

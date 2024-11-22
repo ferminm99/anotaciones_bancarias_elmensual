@@ -45,10 +45,13 @@ router.post("/", authenticateToken, (req, res) => {
     cheque_id, // Este es el número del cheque que recibimos
   } = req.body;
 
-  const formattedFecha = new Date().toISOString();
+  const formattedFecha = fecha
+    ? new Date(fecha).toISOString()
+    : new Date().toISOString();
 
   console.log("Datos recibidos en el POST:", {
     fecha,
+    formattedFecha, // Mostramos la fecha que realmente se utilizará
     nombre_cliente,
     cliente_id,
     tipo,

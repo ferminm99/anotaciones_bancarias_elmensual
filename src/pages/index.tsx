@@ -68,6 +68,7 @@ const Home: React.FC = () => {
 
           getTransactions()
             .then((response) => {
+              console.log("Datos del backend:", response.data);
               // Ordena las transacciones por fecha y transaccion_id
               const orderedTransactions = response.data.sort(
                 (a: Transaction, b: Transaction) => {
@@ -106,25 +107,27 @@ const Home: React.FC = () => {
   }, []);
 
   const handleAddTransaction = (data: CreateTransaction) => {
-    addTransaction(data)
+    addTransaction({
+      ...data,
+      fecha: new Date(data.fecha).toISOString(), // Convierte la fecha al formato ISO correcto (en UTC)
+    })
       .then((response) => {
         const bancoEncontrado = banks.find(
           (banco) => banco.banco_id === response.data.banco_id
         );
+
         const newTransaction = {
           ...response.data,
+          fecha: new Date(response.data.fecha).toISOString(), // Asegúrate de mantener UTC aquí
           nombre_cliente: `${response.data.nombre_cliente}`,
           nombre_banco: bancoEncontrado ? bancoEncontrado.nombre : "SIN BANCO",
         };
+
         console.log("Nueva transacción agregada:", newTransaction);
 
         setTransactions((prev) => {
           const updatedTransactions = [newTransaction, ...prev].sort(
             (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
-          );
-          console.log(
-            "Transacciones después de agregar y ordenar:",
-            updatedTransactions
           );
           return updatedTransactions;
         });
@@ -138,10 +141,6 @@ const Home: React.FC = () => {
               (a, b) =>
                 new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
             );
-          console.log(
-            "Transacciones filtradas después de agregar:",
-            updatedFiltered
-          );
           return updatedFiltered;
         });
 

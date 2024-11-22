@@ -25,6 +25,17 @@ const tipoColorMap: { [key: string]: string } = {
   retiro_efectivo: "text-red-600",
 };
 
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+
+  // Ajustamos la fecha para ignorar el desplazamiento de zona horaria
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0"); // Meses van de 0 a 11
+  const day = String(date.getUTCDate()).padStart(2, "0");
+
+  return `${day}/${month}/${year}`; // Formato DD/MM/YYYY
+};
+
 const TransactionTable: React.FC<{
   transactions: Transaction[];
   onEdit: (transaction: Transaction) => void;
@@ -55,9 +66,8 @@ const TransactionTable: React.FC<{
         <TableBody className="bg-white divide-y divide-gray-200">
           {transactions.map((transaction) => (
             <TableRow key={transaction.transaccion_id}>
-              <TableCell className="px-6 py-4 whitespace-nowrap">
-                {new Date(transaction.fecha).toLocaleDateString()}
-              </TableCell>
+              <TableCell>{formatDate(transaction.fecha)}</TableCell>
+
               <TableCell
                 className={`px-6 py-4 whitespace-nowrap ${
                   tipoColorMap[transaction.tipo] || "text-gray-500"

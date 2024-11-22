@@ -39,11 +39,15 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
   const [nuevoCliente, setNuevoCliente] = useState<string>("");
   const [clienteOption, setClienteOption] = useState<string>("existente");
   const [numeroCheque, setNumeroCheque] = useState<string>(""); // Nuevo estado para número de cheque
-  const today = new Date().toISOString().split("T")[0]; // Obtén la fecha actual en formato 'YYYY-MM-DD'
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0"); // Meses empiezan en 0
+  const day = String(today.getDate()).padStart(2, "0");
+  const localToday = `${year}-${month}-${day}`;
   const [transaction, setTransaction] = useState<CreateTransaction>({
     cliente_id: null,
     banco_id: initialSelectedBank ? initialSelectedBank.banco_id : 0, // Inicializa con el ID del banco seleccionado
-    fecha: today,
+    fecha: localToday,
     monto: null,
     tipo: "",
     cheque_id: null, // Añadimos cheque_id inicializado en null
@@ -80,6 +84,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
       "transferencia",
       "interdeposito",
       "pago_cheque",
+      "pago",
     ].includes(transaction.tipo)
       ? clienteOption === "nuevo"
         ? nuevoCliente.trim() !== ""
@@ -133,7 +138,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
     // Si el campo que cambió es "tipo", limpiamos el cliente si no es "interdeposito", "transferencia" o "pago_cheque"
     if (name === "tipo") {
       if (
-        !["interdeposito", "transferencia", "pago_cheque"].includes(
+        !["interdeposito", "transferencia", "pago_cheque", "pago"].includes(
           value as string
         )
       ) {
@@ -147,7 +152,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
     setTransaction({
       cliente_id: null,
       banco_id: transaction.banco_id, // Mantener el banco seleccionado
-      fecha: today,
+      fecha: localToday,
       monto: null,
       tipo: "", // Reiniciar tipo de transacción
       cheque_id: null, // Reiniciamos cheque_id a null
@@ -193,7 +198,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
 
     // Verificación adicional para tipos de transacción específicos
     if (
-      ["transferencia", "interdeposito", "pago_cheque"].includes(
+      ["transferencia", "interdeposito", "pago_cheque", "pago"].includes(
         transaction.tipo
       )
     ) {
@@ -281,6 +286,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
               </MenuItem>
               <MenuItem value="retiro_efectivo">Retiro en Efectivo</MenuItem>
               <MenuItem value="pago_cheque">Pago con Cheque</MenuItem>
+              <MenuItem value="pago">Servicio de Pago</MenuItem>
             </Select>
           </FormControl>
 
@@ -302,7 +308,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
 
           {/* Cliente existente o nuevo */}
           {/* Solo muestra el campo de cliente si es interdeposito, transferencia o pago_cheque */}
-          {["interdeposito", "transferencia", "pago_cheque"].includes(
+          {["interdeposito", "transferencia", "pago_cheque", "pago"].includes(
             transaction.tipo
           ) && (
             <>
@@ -331,7 +337,9 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
                   <Autocomplete
                     options={clientes}
                     getOptionLabel={(option) =>
-                      `${option.nombre} ${option.apellido}`
+                      `${option.nombre}${
+                        option.apellido ? ` ${option.apellido}` : ""
+                      }`
                     } // Combina nombre y apellido
                     value={selectedCliente}
                     onChange={(event, newValue) => setSelectedCliente(newValue)}
