@@ -101,3 +101,16 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response, // Si la respuesta es exitosa, simplemente retórnala
+  async (error) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.error("Token inválido o expirado. Redirigiendo al login...");
+      localStorage.removeItem("token"); // Elimina el token del almacenamiento local
+      // Puedes redirigir al usuario al login si es necesario
+      window.location.href = "/login"; // Redirige al login
+    }
+    return Promise.reject(error); // Propaga el error si no es relacionado al token
+  }
+);
