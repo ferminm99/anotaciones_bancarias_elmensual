@@ -19,6 +19,10 @@ import { Transaction, Bank, CreateTransaction, Cliente } from "../app/types";
 import { Pagination } from "@mui/material";
 
 const Home: React.FC = () => {
+  interface ApiResponse<T> {
+    data: T;
+  }
+
   const [sessionExpired, setSessionExpired] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -186,7 +190,9 @@ const Home: React.FC = () => {
     console.log(openEditDialog);
   };
 
-  const handleUpdateTransaction = (data: Transaction): Promise<Transaction> => {
+  const handleUpdateTransaction = async (
+    data: Transaction
+  ): Promise<ApiResponse<Transaction>> => {
     return updateTransaction(data.transaccion_id, data)
       .then((response) => {
         // Actualiza las transacciones en el estado local
