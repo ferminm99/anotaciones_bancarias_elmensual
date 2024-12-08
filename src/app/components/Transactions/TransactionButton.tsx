@@ -20,18 +20,20 @@ import { getClientes } from "../../services/api";
 import { Bank, Cliente, Transaction, CreateTransaction } from "../../types";
 
 interface TransactionButtonProps {
-  onSubmit: (data: Transaction) => void;
-  banks: Bank[]; // Asegúrate de recibir un arreglo completo de Bank
-  selectedBank?: Bank; // Esta es la prop para el banco preseleccionado
+  onSubmit: (data: Transaction) => Promise<any>;
+  banks: Bank[];
+  clientes: Cliente[];
+  setClientes: React.Dispatch<React.SetStateAction<Cliente[]>>;
+  selectedBank?: Bank;
 }
-
 const TransactionButton: React.FC<TransactionButtonProps> = ({
   onSubmit,
   banks,
+  clientes,
+  setClientes,
   selectedBank: initialSelectedBank, // Recibe el banco seleccionado desde las props
 }) => {
   const [open, setOpen] = useState<boolean>(false);
-  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
   const [selectedBank, setSelectedBank] = useState<Bank | null>(
     initialSelectedBank || null
@@ -44,6 +46,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
   const month = String(today.getMonth() + 1).padStart(2, "0"); // Meses empiezan en 0
   const day = String(today.getDate()).padStart(2, "0");
   const localToday = `${year}-${month}-${day}`;
+
   const [transaction, setTransaction] = useState<CreateTransaction>({
     cliente_id: null,
     banco_id: initialSelectedBank ? initialSelectedBank.banco_id : 0, // Inicializa con el ID del banco seleccionado
@@ -55,22 +58,18 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
   const [displayMonto, setDisplayMonto] = useState<string>(""); // Para visualización
 
   useEffect(() => {
-    getClientes()
-      .then((response) => {
-        setClientes(response.data);
-      })
-      .catch((error) => {
-        console.error("Error al cargar los clientes:", error);
-      });
-  }, []);
-
-  useEffect(() => {
     setSelectedBank(initialSelectedBank || null);
     setTransaction((prev) => ({
       ...prev,
       banco_id: initialSelectedBank ? initialSelectedBank.banco_id : 0,
     }));
   }, [initialSelectedBank]);
+
+  useEffect(() => {
+    // Actualiza la lista local de clientes al cambiar el estado global
+    setClientes(clientes);
+    console.log("Clientes actualizados en TransactionButton:", clientes);
+  }, [clientes]);
 
   const isFormValid = () => {
     const montoNumerico = parseFloat(
@@ -171,45 +170,52 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
       return;
     }
 
-    // Convertimos `displayMonto` a número antes de enviarlo
     const montoNumerico = parseFloat(
       displayMonto.replace(/\./g, "").replace(",", ".")
     );
 
-    // Crear una transacción con las propiedades faltantes
     const dataToSubmit: Transaction = {
-      transaccion_id: 0, // Agregamos un ID predeterminado (en el backend se generará el real)
+      transaccion_id: 0,
       fecha: transaction.fecha,
       cliente_id:
         clienteOption === "nuevo" ? null : selectedCliente?.cliente_id || null,
       nombre_cliente:
         clienteOption === "nuevo"
           ? nuevoCliente
-          : selectedCliente?.nombre || "", // Asegúrate de incluir nombre_cliente
+          : selectedCliente?.nombre || "",
       tipo: transaction.tipo,
       monto: montoNumerico,
       banco_id: selectedBank?.banco_id || transaction.banco_id,
-      nombre_banco: selectedBank?.nombre || "", // Asegúrate de incluir nombre_banco
+      nombre_banco: selectedBank?.nombre || "",
       cheque_id:
         transaction.tipo === "pago_cheque"
           ? Number(numeroCheque) || null
           : null,
     };
 
-    // Verificación adicional para tipos de transacción específicos
-    if (
-      ["transferencia", "interdeposito", "pago_cheque", "pago"].includes(
-        transaction.tipo
-      )
-    ) {
-      if (dataToSubmit.cliente_id === null && clienteOption === "existente") {
-        alert("Por favor, selecciona un cliente válido.");
-        return;
-      }
-    }
+    onSubmit(dataToSubmit)
+      .then((response) => {
+        if (clienteOption === "nuevo" && response?.data?.cliente_id) {
+          const nuevoClienteObj: Cliente = {
+            cliente_id: response.data.cliente_id,
+            nombre: nuevoCliente.split(" ")[0] || "SinNombre",
+            apellido: nuevoCliente.split(" ").slice(1).join(" ") || "",
+          };
 
-    onSubmit(dataToSubmit); // Aquí envías un objeto completo de tipo `Transaction`
-    handleClose();
+          // Verifica si el cliente ya existe
+          setClientes((prevClientes) => {
+            const existe = prevClientes.some(
+              (cliente) => cliente.cliente_id === nuevoClienteObj.cliente_id
+            );
+            return existe ? prevClientes : [...prevClientes, nuevoClienteObj];
+          });
+        }
+        handleClose();
+      })
+      .catch((error) => {
+        console.error("Error al actualizar la transacción:", error);
+        alert("Hubo un problema al actualizar la transacción.");
+      });
   };
 
   const handleClienteOptionChange = (

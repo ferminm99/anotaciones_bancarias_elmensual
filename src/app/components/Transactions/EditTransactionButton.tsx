@@ -20,16 +20,20 @@ import { getClientes, updateTransaction } from "../../services/api"; // Importam
 import { formatNumber } from "../../../utils/formatNumber";
 
 interface EditTransactionButtonProps {
-  onSubmit: (data: Transaction) => void;
+  onSubmit: (data: Transaction) => Promise<any>;
   banks: Bank[];
   transactionToEdit: Transaction | null;
   onClose: () => void;
+  clientes: Cliente[];
+  setClientes: React.Dispatch<React.SetStateAction<Cliente[]>>;
 }
 
 const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
   onSubmit,
   banks,
   transactionToEdit,
+  clientes,
+  setClientes,
   onClose,
 }) => {
   const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
@@ -38,12 +42,10 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
   const [nuevoCliente, setNuevoCliente] = useState<string>("");
   const [numeroCheque, setNumeroCheque] = useState<number | undefined>(); // Estado para el número de cheque
   const [transaction, setTransaction] = useState<Transaction | null>(null);
-  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [displayMonto, setDisplayMonto] = useState<string>("");
 
   useEffect(() => {
     if (transactionToEdit) {
-      // Inicializamos la transacción a editar
       setTransaction({
         ...transactionToEdit,
         fecha: new Date(transactionToEdit.fecha).toISOString().slice(0, 10),
@@ -56,29 +58,19 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
 
       setSelectedBank(bank || null);
 
-      getClientes()
-        .then((response) => {
-          setClientes(response.data);
-          const client = response.data.find(
-            (client: Cliente) =>
-              client.cliente_id === transactionToEdit.cliente_id
-          );
-          setSelectedClient(client || null);
-        })
-        .catch((error) => {
-          console.error("Error al cargar los clientes:", error);
-        });
+      const client = clientes.find(
+        (client) => client.cliente_id === transactionToEdit.cliente_id
+      );
+      setSelectedClient(client || null);
 
-      // Si la transacción es de tipo 'pago_cheque', puedes usar el cheque_id
       if (
         transactionToEdit.tipo === "pago_cheque" &&
         transactionToEdit.cheque_id
       ) {
-        // Solo necesitas el cheque_id en este punto, no es necesario obtener todos los cheques
-        setNumeroCheque(transactionToEdit.cheque_id); // Establecemos el cheque_id
+        setNumeroCheque(transactionToEdit.cheque_id);
       }
     }
-  }, [transactionToEdit, banks]);
+  }, [transactionToEdit, banks, clientes]);
 
   // Aquí se usa el `useEffect` solo para inicializar los valores cuando `transactionToEdit` cambie.
   // No volverá a sobrescribir los datos cada vez que el usuario interactúe con el formulario.
@@ -162,7 +154,6 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
   };
 
   const handleSubmit = () => {
-    // Validar el formulario antes de enviar
     if (!isFormValid()) {
       alert("Por favor, completa todos los campos requeridos.");
       return;
@@ -173,41 +164,47 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
         displayMonto.replace(/\./g, "").replace(",", ".")
       );
 
-      transaction.monto = montoNumerico;
-      const cliente = clienteOption === "nuevo" ? nuevoCliente : selectedClient;
-      const updatedTransaction = {
-        ...transaction,
-        nombre_cliente: cliente
-          ? clienteOption === "nuevo"
+      const dataToSubmit: Transaction = {
+        transaccion_id: transaction.transaccion_id,
+        fecha: transaction.fecha,
+        cliente_id:
+          clienteOption === "nuevo" ? null : selectedClient?.cliente_id || null,
+        nombre_cliente:
+          clienteOption === "nuevo"
             ? nuevoCliente
-            : `${selectedClient?.nombre} ${selectedClient?.apellido}`
-          : "",
-        banco_id: selectedBank?.banco_id || 0,
+            : selectedClient?.nombre || "",
+        tipo: transaction.tipo,
+        monto: montoNumerico,
+        banco_id: selectedBank?.banco_id || transaction.banco_id,
+        nombre_banco: selectedBank?.nombre || "",
         cheque_id:
-          transaction.tipo === "pago_cheque" ? transaction.cheque_id : null,
-        numero_cheque:
-          transaction.tipo === "pago_cheque" ? String(numeroCheque) : null, // Convertir a string si es pago_cheque
+          transaction.tipo === "pago_cheque"
+            ? Number(numeroCheque) || null
+            : null,
       };
 
-      // Log para verificar los datos que se enviarán al backend
-      console.log(
-        "Datos a enviar al backend en handleSubmit:",
-        updatedTransaction
-      );
+      onSubmit(dataToSubmit)
+        .then((response) => {
+          if (clienteOption === "nuevo" && response?.data?.cliente_id) {
+            const nuevoClienteObj: Cliente = {
+              cliente_id: response.data.cliente_id,
+              nombre: nuevoCliente.split(" ")[0] || "SinNombre",
+              apellido: nuevoCliente.split(" ").slice(1).join(" ") || "",
+            };
 
-      if (!updatedTransaction.banco_id) {
-        console.error("Banco no seleccionado");
-        return;
-      }
-
-      // Asegúrate de que solo la transacción específica sea actualizada
-      updateTransaction(updatedTransaction.transaccion_id, updatedTransaction)
-        .then(() => {
-          // Usa una función de actualización que NO sobrescriba todas las transacciones
-          onSubmit(updatedTransaction);
+            // Agrega el cliente al estado global `clientes`
+            setClientes((prevClientes) => {
+              const existe = prevClientes.some(
+                (cliente) => cliente.cliente_id === nuevoClienteObj.cliente_id
+              );
+              return existe ? prevClientes : [...prevClientes, nuevoClienteObj];
+            });
+          }
+          onClose();
         })
         .catch((error) => {
           console.error("Error al actualizar la transacción:", error);
+          alert("Hubo un problema al actualizar la transacción.");
         });
     }
   };

@@ -114,3 +114,33 @@ api.interceptors.response.use(
     return Promise.reject(error); // Propaga el error si no es relacionado al token
   }
 );
+// Intercepta las respuestas del backend
+api.interceptors.response.use(
+  (response) => response, // Si la respuesta es exitosa, simplemente retórnala
+  (error) => {
+    // Si el token expiró o es inválido
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.error("Token inválido o expirado.");
+
+      // Opcional: Mostrar un mensaje al usuario
+      alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
+
+      // Elimina el token y redirige al login
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
+
+    // Propaga otros errores
+    return Promise.reject(error);
+  }
+);
+
+// Valida si el token sigue siendo válido
+export const validateToken = async (): Promise<boolean> => {
+  try {
+    await api.get("/auth/validate-token"); // Endpoint que solo verifica el token
+    return true; // El token es válido
+  } catch {
+    return false; // El token no es válido
+  }
+};

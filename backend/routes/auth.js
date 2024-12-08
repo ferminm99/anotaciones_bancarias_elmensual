@@ -2,10 +2,12 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../db"); // Conexión a tu base de datos
+const authenticateToken = require("../middleware/auth");
 const router = express.Router();
 
 // Cargar la clave secreta del archivo .env
 const JWT_SECRET = process.env.JWT_SECRET;
+//const REFRESH_SECRET_KEY = process.env.JWT_REFRESH_SECRET;
 
 // Registro de usuario
 router.post("/register", async (req, res) => {
@@ -69,6 +71,11 @@ router.post("/login", async (req, res) => {
     console.error("Error al iniciar sesión:", error);
     res.status(500).json({ error: "Error en el servidor" });
   }
+});
+
+// Endpoint para validar el token
+router.get("/validate-token", authenticateToken, (req, res) => {
+  res.status(200).json({ message: "Token válido" });
 });
 
 module.exports = router;

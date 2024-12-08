@@ -1,22 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { SetStateAction, useEffect, useState } from "react";
 import {
   getTransactions,
   deleteTransaction,
   addTransaction,
   getBanks,
+  validateToken,
+  updateTransaction,
+  getClientes,
 } from "../app/services/api";
 import TransactionTable from "../app/components/Transactions/TransactionTable";
 import FilterByBank from "../app/components/Transactions/FilterByBank";
 import AddTransactionButton from "../app/components/Transactions/TransactionButton";
 import ConfirmDialog from "../app/components/ConfirmDialog";
 import EditTransactionButton from "../app/components/Transactions/EditTransactionButton"; // Importamos el nuevo botón
-import { Transaction, Bank, CreateTransaction } from "../app/types";
+import { Transaction, Bank, CreateTransaction, Cliente } from "../app/types";
 import { Pagination } from "@mui/material";
 
 const Home: React.FC = () => {
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<
     Transaction[]
   >([]);
@@ -49,106 +54,129 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    getBanks()
-      .then((response) => {
-        const bancos: Bank[] = response.data;
-        setBanks(bancos);
+    const verifySession = async () => {
+      const isValid = await validateToken();
+      if (!isValid && !sessionExpired) {
+        setSessionExpired(true); // Marca la sesión como expirada
+        //alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+      }
+    };
 
-        const saldoTotal = bancos.reduce(
-          (acc: number, bank: Bank) => acc + bank.saldo_total,
-          0
-        );
-        setTotalSaldo(saldoTotal);
+    verifySession();
 
-        const savedBank = localStorage.getItem("selectedBank");
-        const firstBank: Bank = savedBank ? JSON.parse(savedBank) : bancos[0];
+    // Carga los bancos y transacciones si el token es válido
+    if (!sessionExpired) {
+      getBanks()
+        .then((response) => {
+          const bancos: Bank[] = response.data;
+          setBanks(bancos);
 
-        if (firstBank) {
-          setSelectedBank(firstBank);
+          const saldoTotal = bancos.reduce(
+            (acc: number, bank: Bank) => acc + bank.saldo_total,
+            0
+          );
+          setTotalSaldo(saldoTotal);
 
-          getTransactions()
-            .then((response) => {
-              console.log("Datos del backend:", response.data);
-              // Ordena las transacciones por fecha y transaccion_id
-              const orderedTransactions = response.data.sort(
-                (a: Transaction, b: Transaction) => {
-                  const dateComparison =
-                    new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
-                  if (dateComparison === 0) {
-                    // Si las fechas son iguales, ordenar por transaccion_id descendente
-                    return b.transaccion_id - a.transaccion_id;
+          const savedBank = localStorage.getItem("selectedBank");
+          const firstBank: Bank = savedBank ? JSON.parse(savedBank) : bancos[0];
+
+          if (firstBank) {
+            setSelectedBank(firstBank);
+
+            getTransactions()
+              .then((response) => {
+                const orderedTransactions = response.data.sort(
+                  (a: Transaction, b: Transaction) => {
+                    const dateComparison =
+                      new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+                    if (dateComparison === 0) {
+                      return b.transaccion_id - a.transaccion_id;
+                    }
+                    return dateComparison;
                   }
-                  return dateComparison;
-                }
+                );
+
+                setTransactions(orderedTransactions);
+
+                const filtered = orderedTransactions.filter(
+                  (transaction: Transaction) =>
+                    transaction.banco_id === firstBank.banco_id
+                );
+
+                setFilteredTransactions(filtered);
+              })
+              .catch((error) =>
+                console.error("Error al obtener las transacciones:", error)
               );
+          }
+        })
+        .catch((error) => console.error("Error al obtener los bancos:", error));
+    }
+  }, [sessionExpired]);
 
-              // Verifica el orden en la consola
-              console.log(
-                "Transacciones ordenadas por fecha y hora:",
-                orderedTransactions
-              );
-
-              setTransactions(orderedTransactions);
-
-              // Filtrar las transacciones por el banco seleccionado
-              const filtered = orderedTransactions.filter(
-                (transaction: Transaction) =>
-                  transaction.banco_id === firstBank.banco_id
-              );
-
-              setFilteredTransactions(filtered);
-            })
-            .catch((error) =>
-              console.error("Error al obtener las transacciones:", error)
-            );
-        }
+  useEffect(() => {
+    getClientes()
+      .then((response) => {
+        // Elimina duplicados por `cliente_id`
+        const clientesUnicos = response.data.reduce(
+          (acc: any[], cliente: { cliente_id: any }) => {
+            if (!acc.some((c) => c.cliente_id === cliente.cliente_id)) {
+              acc.push(cliente);
+            }
+            return acc;
+          },
+          []
+        );
+        setClientes(clientesUnicos);
       })
-      .catch((error) => console.error("Error al obtener los bancos:", error));
+      .catch((error) => console.error("Error al cargar los clientes:", error));
   }, []);
 
   const handleAddTransaction = (data: CreateTransaction) => {
-    addTransaction({
+    return addTransaction({
       ...data,
-      fecha: new Date(data.fecha).toISOString(), // Convierte la fecha al formato ISO correcto (en UTC)
+      fecha: new Date(data.fecha).toISOString(),
     })
       .then((response) => {
         const bancoEncontrado = banks.find(
           (banco) => banco.banco_id === response.data.banco_id
         );
 
-        const newTransaction = {
+        const newTransaction: Transaction = {
           ...response.data,
-          fecha: new Date(response.data.fecha).toISOString(), // Asegúrate de mantener UTC aquí
-          nombre_cliente: `${response.data.nombre_cliente}`,
+          nombre_cliente: response.data.nombre_cliente || "",
           nombre_banco: bancoEncontrado ? bancoEncontrado.nombre : "SIN BANCO",
+          numero_cheque: response.data.numero_cheque || null,
         };
 
-        console.log("Nueva transacción agregada:", newTransaction);
+        setTransactions((prev) => [newTransaction, ...prev]);
+        setFilteredTransactions((prev) =>
+          [newTransaction, ...prev].filter(
+            (transaction) => transaction.banco_id === selectedBank?.banco_id
+          )
+        );
 
-        setTransactions((prev) => {
-          const updatedTransactions = [newTransaction, ...prev].sort(
-            (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
-          );
-          return updatedTransactions;
-        });
+        // Si se creó un cliente nuevo, actualizamos la lista global de clientes
+        if (data.cliente_id === null && response.data.cliente_id) {
+          const nuevoCliente: Cliente = {
+            cliente_id: response.data.cliente_id,
+            nombre: response.data.nombre_cliente?.split(" ")[0] || "SinNombre",
+            apellido:
+              response.data.nombre_cliente?.split(" ").slice(1).join(" ") || "",
+          };
 
-        setFilteredTransactions((prev) => {
-          const updatedFiltered = [newTransaction, ...prev]
-            .filter(
-              (transaction) => transaction.banco_id === selectedBank?.banco_id
-            )
-            .sort(
-              (a, b) =>
-                new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
-            );
-          return updatedFiltered;
-        });
+          setClientes((prev) => [...prev, nuevoCliente]);
+        }
 
         fetchBanks();
+        return response.data;
       })
-      .catch((error) =>
-        console.error("Error al agregar la transacción:", error)
-      );
+      .catch((error) => {
+        console.error("Error al agregar la transacción:", error);
+        throw error;
+      });
   };
 
   const handleEditTransaction = (transaction: Transaction) => {
@@ -158,28 +186,59 @@ const Home: React.FC = () => {
     console.log(openEditDialog);
   };
 
-  const handleUpdateTransaction = (data: Transaction) => {
-    setTransactions((prevTransactions) => {
-      const updatedTransactions = prevTransactions.map((trans) =>
-        trans.transaccion_id === data.transaccion_id ? data : trans
-      );
-      return updatedTransactions;
-    });
+  const handleUpdateTransaction = (data: Transaction): Promise<Transaction> => {
+    return updateTransaction(data.transaccion_id, data)
+      .then((response) => {
+        // Actualiza las transacciones en el estado local
+        const updatedTransaction = response.data;
 
-    setFilteredTransactions((prevFiltered) => {
-      const updatedFiltered = prevFiltered.map((trans) =>
-        trans.transaccion_id === data.transaccion_id ? data : trans
-      );
-      return updatedFiltered;
-    });
+        setTransactions((prevTransactions) =>
+          prevTransactions.map((trans) =>
+            trans.transaccion_id === data.transaccion_id
+              ? updatedTransaction
+              : trans
+          )
+        );
 
-    setTransactionToEdit(null); // Limpiamos la transacción seleccionada
-    setOpenEditDialog(false); // Cerramos el diálogo
-    fetchBanks(); // Actualiza los bancos después de modificar la transacción
+        setFilteredTransactions((prevFiltered) =>
+          prevFiltered.map((trans) =>
+            trans.transaccion_id === data.transaccion_id
+              ? updatedTransaction
+              : trans
+          )
+        );
+
+        // Verifica si el cliente existe en la lista global de clientes y agrégalo si no está
+        if (response.data.cliente_id) {
+          const nuevoCliente: Cliente = {
+            cliente_id: response.data.cliente_id,
+            nombre: response.data.nombre_cliente?.split(" ")[0] || "SinNombre",
+            apellido:
+              response.data.nombre_cliente?.split(" ").slice(1).join(" ") || "",
+          };
+
+          setClientes((prevClientes) => {
+            const existe = prevClientes.some(
+              (cliente) => cliente.cliente_id === nuevoCliente.cliente_id
+            );
+            return existe ? prevClientes : [...prevClientes, nuevoCliente];
+          });
+        }
+
+        fetchBanks(); // Actualiza los bancos después de modificar la transacción
+        return updatedTransaction; // Retorna la transacción actualizada
+      })
+      .catch((error) => {
+        console.error("Error al actualizar la transacción:", error);
+        throw error; // Propaga el error para manejarlo adecuadamente
+      });
   };
 
   const filterByBank = (banco: Bank | null) => {
     setSelectedBank(banco);
+
+    // Reseteamos la página actual a la primera
+    setCurrentPage(1);
 
     // Guarda el banco seleccionado en localStorage
     if (banco) {
@@ -320,6 +379,8 @@ const Home: React.FC = () => {
           <AddTransactionButton
             onSubmit={handleAddTransaction}
             banks={banks}
+            clientes={clientes} // Estado global actualizado
+            setClientes={setClientes} // Para actualizar desde el hijo
             selectedBank={selectedBank ?? undefined}
           />
         </div>
@@ -346,7 +407,9 @@ const Home: React.FC = () => {
           transactionToEdit={transactionToEdit}
           banks={banks}
           onSubmit={handleUpdateTransaction}
-          onClose={() => setTransactionToEdit(null)} // Cerramos el diálogo aquí
+          clientes={clientes}
+          setClientes={setClientes}
+          onClose={() => setTransactionToEdit(null)}
         />
       )}
 

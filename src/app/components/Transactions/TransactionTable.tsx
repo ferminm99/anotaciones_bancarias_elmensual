@@ -14,15 +14,15 @@ import { formatNumber } from "../../../utils/formatNumber";
 
 // Mapa de clases Tailwind para los diferentes tipos de transacción
 const tipoColorMap: { [key: string]: string } = {
-  cheque_deposito: "text-green-600",
-  deposito_efectivo: "text-green-600",
-  interdeposito: "text-green-600",
-  transferencia: "text-red-600",
-  retiro_cheque: "text-blue-600",
-  pago_cheque: "text-red-600",
-  impuesto: "text-red-600",
-  gastos_mantenimiento: "text-red-600",
-  retiro_efectivo: "text-red-600",
+  cheque_deposito: "#2c7a7b", // Verde oscuro
+  deposito_efectivo: "#2c7a7b", // Verde oscuro
+  interdeposito: "#2c7a7b", // Verde oscuro
+  transferencia: "#c53030", // Rojo oscuro
+  retiro_cheque: "#2b6cb0", // Azul oscuro
+  pago_cheque: "#c53030", // Rojo oscuro
+  impuesto: "#c53030", // Rojo oscuro
+  gastos_mantenimiento: "#c53030", // Rojo oscuro
+  retiro_efectivo: "#c53030", // Rojo oscuro
 };
 
 const formatDate = (dateString: string) => {
@@ -69,16 +69,16 @@ const TransactionTable: React.FC<{
               <TableCell>{formatDate(transaction.fecha)}</TableCell>
 
               <TableCell
-                className={`px-6 py-4 whitespace-nowrap ${
-                  tipoColorMap[transaction.tipo] || "text-gray-500"
-                }`}
+                sx={{
+                  color:
+                    tipoColorMap[transaction.tipo.trim().toLowerCase()] ||
+                    "gray",
+                  fontWeight: "bold",
+                }}
               >
                 {transaction.tipo}
-                {transaction.tipo === "pago_cheque" &&
-                transaction.numero_cheque ? (
-                  <span> (Cheque N°: {transaction.numero_cheque})</span>
-                ) : null}
               </TableCell>
+
               <TableCell className="px-6 py-4 whitespace-nowrap">
                 {transaction.nombre_cliente
                   ? transaction.nombre_cliente.replace("null", "")

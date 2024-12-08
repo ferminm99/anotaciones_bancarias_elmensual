@@ -3,6 +3,7 @@ import { AppProps } from "next/app";
 import "../app/globals.css";
 import Sidebar from "../app/components/Layout/Sidebar";
 import { useRouter } from "next/router";
+import "/dist/output.css";
 import { useEffect, useState } from "react";
 import jwt_decode from "jwt-decode";
 
