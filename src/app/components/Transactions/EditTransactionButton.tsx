@@ -16,11 +16,14 @@ import {
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import { Bank, Cliente, Transaction } from "../../types";
-import { getClientes, updateTransaction } from "../../services/api"; // Importamos la nueva función
 import { formatNumber } from "../../../utils/formatNumber";
 
+interface ApiResponse<T> {
+  data: T;
+}
+
 interface EditTransactionButtonProps {
-  onSubmit: (data: Transaction) => Promise<any>;
+  onSubmit: (data: Transaction) => Promise<ApiResponse<Transaction>>;
   banks: Bank[];
   transactionToEdit: Transaction | null;
   onClose: () => void;

@@ -1,6 +1,6 @@
 "use client";
 
-import { SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   getTransactions,
   deleteTransaction,
@@ -121,13 +121,13 @@ const Home: React.FC = () => {
       .then((response) => {
         // Elimina duplicados por `cliente_id`
         const clientesUnicos = response.data.reduce(
-          (acc: any[], cliente: { cliente_id: any }) => {
+          (acc: Cliente[], cliente: Cliente) => {
             if (!acc.some((c) => c.cliente_id === cliente.cliente_id)) {
               acc.push(cliente);
             }
             return acc;
           },
-          []
+          [] as Cliente[] // Tipo inicial del acumulador
         );
         setClientes(clientesUnicos);
       })

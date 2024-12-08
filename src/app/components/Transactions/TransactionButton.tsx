@@ -16,16 +16,20 @@ import {
   FormLabel,
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
-import { getClientes } from "../../services/api";
 import { Bank, Cliente, Transaction, CreateTransaction } from "../../types";
 
+interface ApiResponse<T> {
+  data: T;
+}
+
 interface TransactionButtonProps {
-  onSubmit: (data: Transaction) => Promise<any>;
+  onSubmit: (data: Transaction) => Promise<ApiResponse<CreateTransaction>>;
   banks: Bank[];
   clientes: Cliente[];
   setClientes: React.Dispatch<React.SetStateAction<Cliente[]>>;
   selectedBank?: Bank;
 }
+
 const TransactionButton: React.FC<TransactionButtonProps> = ({
   onSubmit,
   banks,
