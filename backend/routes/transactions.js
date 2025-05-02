@@ -42,7 +42,7 @@ router.post("/", authenticateToken, (req, res) => {
     tipo,
     monto,
     banco_id,
-    cheque_id, // Este es el número del cheque que recibimos
+    numero_cheque, // Este es el número del cheque que recibimos
   } = req.body;
 
   const formattedFecha = fecha
@@ -57,58 +57,72 @@ router.post("/", authenticateToken, (req, res) => {
     tipo,
     monto,
     banco_id,
-    cheque_id,
+    numero_cheque,
   });
-
-  let numero_cheque = cheque_id;
+  let idCheque = null;
   // Función para manejar la inserción de la transacción
   function insertarTransaccion(cliente_id, nombre_cliente) {
     console.log("Insertando transacción con cliente_id:", cliente_id);
 
-    // Si la transacción es un pago con cheque
-    if (tipo === "pago_cheque" && cheque_id) {
-      console.log(
-        "Transacción es un pago con cheque, número cheque:",
-        cheque_id
+    // Si la transacción es un pago con cheque haciamos un chequeo de si ese cheque existe pero creo que generara mas problemas...
+    // por ej si existe ese cheque luego ambas transacciones quedan linkeadas con el mismo cheque y no podria cambiar el numero sin modificarlo en la otra
+    // if (tipo === "pago_cheque" && numero_cheque) {
+    //   console.log(
+    //     "Transacción es un pago con cheque, número cheque:",
+    //     numero_cheque
+    //   );
+
+    //   // Buscar si el cheque ya existe por su número
+    //   const queryCheque = "SELECT cheque_id FROM cheques WHERE numero = $1";
+    //   connection.query(queryCheque, [numero_cheque], (err, result) => {
+    //     if (err) {
+    //       console.error("Error al buscar cheque:", err);
+    //       return res.status(500).send("Error al buscar cheque");
+    //     }
+
+    //     if (result.rows.length > 0) {
+    //       // El cheque ya existe, usamos su cheque_id
+    //       idCheque = result.rows[0].cheque_id;
+    //       console.log("Cheque ya existe con cheque_id:", idCheque);
+    //       realizarInsercionTransaccion(idCheque);
+    //     } else {
+    //       // El cheque no existe, lo creamos
+    //       console.log(
+    //         "Cheque no existe, creando nuevo cheque con número:",
+    //         numero_cheque
+    //       );
+    //       const insertCheque =
+    //         "INSERT INTO cheques (numero) VALUES ($1) RETURNING cheque_id";
+    //       connection.query(insertCheque, [numero_cheque], (err, result) => {
+    //         if (err) {
+    //           console.error("Error al insertar cheque:", err);
+    //           return res.status(500).send("Error al insertar cheque");
+    //         }
+    //         idCheque = result.rows[0].cheque_id;
+    //         console.log("Cheque ya existe con cheque_id:", idCheque);
+    //         realizarInsercionTransaccion(idCheque);
+    //       });
+    //     }
+    //   });
+    // } else {
+    //   console.log("Transacción no es un pago con cheque.");
+    //   realizarInsercionTransaccion(null);
+    // }
+
+    // 1) Insertar siempre un nuevo cheque
+    if (tipo === "pago_cheque" && numero_cheque) {
+      connection.query(
+        "INSERT INTO cheques (numero) VALUES ($1) RETURNING cheque_id",
+        [numero_cheque],
+        (err, result) => {
+          if (err) return res.status(500).send("Error al insertar cheque");
+          const nuevoChequeId = result.rows[0].cheque_id;
+          realizarInsercionTransaccion(clienteId, nuevoChequeId);
+        }
       );
-
-      // Buscar si el cheque ya existe por su número
-      const queryCheque = "SELECT cheque_id FROM cheques WHERE numero = $1";
-      connection.query(queryCheque, [cheque_id], (err, result) => {
-        if (err) {
-          console.error("Error al buscar cheque:", err);
-          return res.status(500).send("Error al buscar cheque");
-        }
-
-        if (result.rows.length > 0) {
-          // El cheque ya existe, usamos su cheque_id
-          id = result.rows[0].cheque_id;
-          console.log("Cheque ya existe con cheque_id:", id);
-          realizarInsercionTransaccion(id);
-        } else {
-          // El cheque no existe, lo creamos
-          console.log(
-            "Cheque no existe, creando nuevo cheque con número:",
-            numero_cheque
-          );
-          const insertCheque =
-            "INSERT INTO cheques (numero) VALUES ($1) RETURNING cheque_id";
-          connection.query(insertCheque, [numero_cheque], (err, result) => {
-            if (err) {
-              console.error("Error al insertar cheque:", err);
-              return res.status(500).send("Error al insertar cheque");
-            }
-            id = result.rows[0].cheque_id;
-            console.log("Cheque creado con cheque_id:", id);
-            realizarInsercionTransaccion(id);
-          });
-        }
-      });
     } else {
-      console.log("Transacción no es un pago con cheque.");
-      realizarInsercionTransaccion(null);
+      realizarInsercionTransaccion(clienteId, null);
     }
-
     // Función para realizar la inserción de la transacción
     function realizarInsercionTransaccion(cheque_id) {
       console.log(
@@ -143,6 +157,7 @@ router.post("/", authenticateToken, (req, res) => {
             tipo: tipo,
             monto: monto,
             cheque_id: cheque_id, // Incluimos cheque_id en la respuesta
+            numero_cheque: numero_cheque,
           });
         }
       );
@@ -409,6 +424,7 @@ router.put("/:transaccion_id", authenticateToken, (req, res) => {
             tipo: tipo,
             monto: monto,
             cheque_id: cheque_id,
+            numero_cheque: numero_cheque,
           });
         }
       );

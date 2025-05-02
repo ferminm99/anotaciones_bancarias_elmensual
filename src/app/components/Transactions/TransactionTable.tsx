@@ -41,6 +41,8 @@ const TransactionTable: React.FC<{
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: number) => void;
 }> = ({ transactions, onEdit, onDelete }) => {
+  const showChequeCol = transactions.some((tx) => tx.numero_cheque);
+
   return (
     <TableContainer component={Paper} className="shadow-lg rounded-lg">
       <Table className="table-auto min-w-full divide-y divide-gray-200">
@@ -55,6 +57,7 @@ const TransactionTable: React.FC<{
             <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
               Cliente
             </TableCell>
+            {showChequeCol && <TableCell>Nro Cheque</TableCell>}
             <TableCell className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
               Monto
             </TableCell>
@@ -84,6 +87,10 @@ const TransactionTable: React.FC<{
                   ? transaction.nombre_cliente.replace("null", "")
                   : " - "}
               </TableCell>
+              {showChequeCol && (
+                <TableCell>{transaction.numero_cheque ?? "-"}</TableCell>
+              )}
+
               <TableCell className="px-6 py-4 whitespace-nowrap">
                 {transaction.monto !== null
                   ? formatNumber(transaction.monto)

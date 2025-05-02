@@ -23,7 +23,7 @@ interface ApiResponse<T> {
 }
 
 interface TransactionButtonProps {
-  onSubmit: (data: Transaction) => Promise<ApiResponse<CreateTransaction>>;
+  onSubmit: (data: CreateTransaction) => Promise<ApiResponse<Transaction>>;
   banks: Bank[];
   clientes: Cliente[];
   setClientes: React.Dispatch<React.SetStateAction<Cliente[]>>;
@@ -44,7 +44,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
   );
   const [nuevoCliente, setNuevoCliente] = useState<string>("");
   const [clienteOption, setClienteOption] = useState<string>("existente");
-  const [numeroCheque, setNumeroCheque] = useState<string>(""); // Nuevo estado para número de cheque
+  const [numeroCheque, setNumeroCheque] = useState<string>("");
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0"); // Meses empiezan en 0
@@ -53,12 +53,13 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
 
   const [transaction, setTransaction] = useState<CreateTransaction>({
     cliente_id: null,
-    banco_id: initialSelectedBank ? initialSelectedBank.banco_id : 0, // Inicializa con el ID del banco seleccionado
+    banco_id: initialSelectedBank ? initialSelectedBank.banco_id : 0,
     fecha: localToday,
     monto: null,
     tipo: "",
-    cheque_id: null, // Añadimos cheque_id inicializado en null
+    numero_cheque: null,
   });
+
   const [displayMonto, setDisplayMonto] = useState<string>(""); // Para visualización
 
   useEffect(() => {
@@ -158,7 +159,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
       fecha: localToday,
       monto: null,
       tipo: "", // Reiniciar tipo de transacción
-      cheque_id: null, // Reiniciamos cheque_id a null
+      numero_cheque: null, // Reiniciamos cheque_id a null
     });
     setDisplayMonto("");
     setSelectedCliente(null); // Reiniciar cliente seleccionado
@@ -178,8 +179,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
       displayMonto.replace(/\./g, "").replace(",", ".")
     );
 
-    const dataToSubmit: Transaction = {
-      transaccion_id: 0,
+    const dataToSubmit: CreateTransaction = {
       fecha: transaction.fecha,
       cliente_id:
         clienteOption === "nuevo" ? null : selectedCliente?.cliente_id || null,
@@ -190,11 +190,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
       tipo: transaction.tipo,
       monto: montoNumerico,
       banco_id: selectedBank?.banco_id || transaction.banco_id,
-      nombre_banco: selectedBank?.nombre || "",
-      cheque_id:
-        transaction.tipo === "pago_cheque"
-          ? Number(numeroCheque) || null
-          : null,
+      numero_cheque: transaction.tipo === "pago_cheque" ? numeroCheque : null,
     };
 
     onSubmit(dataToSubmit)

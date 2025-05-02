@@ -152,7 +152,7 @@ const Home: React.FC = () => {
           ...response.data,
           nombre_cliente: response.data.nombre_cliente || "",
           nombre_banco: bancoEncontrado ? bancoEncontrado.nombre : "SIN BANCO",
-          numero_cheque: response.data.numero_cheque || null,
+          numero_cheque: response.data.numero_cheque,
         };
 
         setTransactions((prev) => [newTransaction, ...prev]);

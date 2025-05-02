@@ -43,7 +43,7 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
   const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
   const [clienteOption, setClienteOption] = useState<string>("existente");
   const [nuevoCliente, setNuevoCliente] = useState<string>("");
-  const [numeroCheque, setNumeroCheque] = useState<number | undefined>(); // Estado para el número de cheque
+  const [numeroCheque, setNumeroCheque] = useState<string>("");
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [displayMonto, setDisplayMonto] = useState<string>("");
 
@@ -66,11 +66,8 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
       );
       setSelectedClient(client || null);
 
-      if (
-        transactionToEdit.tipo === "pago_cheque" &&
-        transactionToEdit.cheque_id
-      ) {
-        setNumeroCheque(transactionToEdit.cheque_id);
+      if (transactionToEdit?.tipo === "pago_cheque") {
+        setNumeroCheque(transactionToEdit.numero_cheque ?? "");
       }
     }
   }, [transactionToEdit, banks, clientes]);
@@ -95,7 +92,7 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
       ) {
         setSelectedClient(null);
         setNuevoCliente("");
-        setNumeroCheque(undefined); // Limpiamos el número de cheque si no es "pago_cheque"
+        setNumeroCheque(""); // Limpiamos el número de cheque si no es "pago_cheque"
       }
     }
   };
@@ -141,10 +138,9 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
     const isBancoValid = selectedBank !== null;
 
     // El número de cheque es obligatorio si el tipo es pago_cheque
+    // comprobamos que el campo no esté vacío si es pago_cheque
     const isChequeValid =
-      transaction?.tipo === "pago_cheque"
-        ? String(numeroCheque).trim() !== ""
-        : true;
+      transaction?.tipo === "pago_cheque" ? numeroCheque.trim() !== "" : true;
 
     // Retorna true si todas las condiciones son válidas
     return (
@@ -181,9 +177,8 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
         banco_id: selectedBank?.banco_id || transaction.banco_id,
         nombre_banco: selectedBank?.nombre || "",
         cheque_id:
-          transaction.tipo === "pago_cheque"
-            ? Number(numeroCheque) || null
-            : null,
+          transaction.tipo === "pago_cheque" ? Number(numeroCheque) : null,
+        numero_cheque: transaction.tipo === "pago_cheque" ? numeroCheque : null,
       };
 
       onSubmit(dataToSubmit)
@@ -356,9 +351,9 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
               <FormControl fullWidth margin="normal">
                 <TextField
                   label="Número de Cheque"
-                  type="number" // Tipo número
-                  value={numeroCheque || ""}
-                  onChange={(e) => setNumeroCheque(Number(e.target.value))}
+                  type="number"
+                  value={numeroCheque}
+                  onChange={(e) => setNumeroCheque(e.target.value)}
                 />
               </FormControl>
             )}

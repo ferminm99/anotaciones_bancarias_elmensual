@@ -16,10 +16,11 @@ export interface Transaction {
 export interface CreateTransaction {
   fecha: string;
   cliente_id: number | null;
-  monto: number | null;
+  nombre_cliente?: string;
   tipo: string;
+  monto: number | null;
   banco_id: number;
-  cheque_id: number | null;
+  numero_cheque: string | null;
 }
 
 export interface Bank {
