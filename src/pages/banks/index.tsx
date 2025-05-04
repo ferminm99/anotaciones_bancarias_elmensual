@@ -90,6 +90,7 @@ const BanksPage: React.FC = () => {
   };
 
   const handleAdd = (data: { nombre: string; saldo_total: number }) => {
+    setLoading(true);
     if (
       banks.some((b) => b.nombre.toLowerCase() === data.nombre.toLowerCase())
     ) {
@@ -100,6 +101,7 @@ const BanksPage: React.FC = () => {
       .then((res) => {
         setCacheBanks((prev) => [...prev, res.data]);
         showSnackbar("Transacción agregada con éxito");
+        setLoading(false);
       })
       .catch((err) => console.error("Error al agregar banco:", err));
   };
@@ -109,12 +111,14 @@ const BanksPage: React.FC = () => {
     setOpenConfirm(true);
   };
   const handleDelete = () => {
+    setLoading(true);
     if (toDelete == null) return;
     deleteBank(toDelete)
       .then(() => {
         setCacheBanks((prev) => prev.filter((b) => b.banco_id !== toDelete));
         setOpenConfirm(false);
         showSnackbar("Transacción eliminada con éxito");
+        setLoading(false);
       })
       .catch((err) => console.error("Error al eliminar banco:", err));
   };
@@ -123,6 +127,7 @@ const BanksPage: React.FC = () => {
     setToEdit(bank);
   };
   const handleUpdate = (data: Bank) => {
+    setLoading(true);
     if (
       banks.some(
         (b) =>
@@ -144,6 +149,7 @@ const BanksPage: React.FC = () => {
     updateBank(data.banco_id, data)
       .then(() => {
         showSnackbar("Transacción actualizada con éxito");
+        setLoading(false);
         setToEdit(null);
       })
       .catch((err) => {

@@ -97,10 +97,12 @@ const ClientesPage: React.FC = () => {
   };
 
   const handleAdd = (data: { nombre: string; apellido: string }) => {
+    setLoading(true);
     addCliente(data)
       .then((res) => {
         setCacheClients((prev) => [...prev, res.data]);
         showSnackbar("Transacción agregada con éxito");
+        setLoading(false);
       })
       .catch((err) => console.error("Error al agregar cliente:", err));
   };
@@ -110,6 +112,7 @@ const ClientesPage: React.FC = () => {
     setOpenConfirm(true);
   };
   const handleDelete = () => {
+    setLoading(true);
     if (toDelete == null) return;
     deleteCliente(toDelete)
       .then(() => {
@@ -117,6 +120,7 @@ const ClientesPage: React.FC = () => {
           prev.filter((c) => c.cliente_id !== toDelete)
         );
         showSnackbar("Transacción eliminada con éxito");
+        setLoading(false);
         setOpenConfirm(false);
       })
       .catch((err) => console.error("Error al eliminar cliente:", err));

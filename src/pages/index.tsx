@@ -140,6 +140,7 @@ export default function Home() {
       ...data,
       fecha: new Date(data.fecha).toISOString(),
     }).then((res) => {
+      setLoading(true);
       setTransactions((prev) => [res.data, ...prev]);
       // si crea cliente nuevo:
       if (data.cliente_id === null && res.data.cliente_id) {
@@ -158,20 +159,24 @@ export default function Home() {
       // refrescar saldo vía trigger backend
       syncBanks().catch(console.error);
       showSnackbar("Transacción agregada con éxito");
+      setLoading(false);
       return res.data;
     });
 
   const handleUpdateTransaction = (tx: Transaction) =>
     updateTransaction(tx.transaccion_id, tx).then((res) => {
+      setLoading(true);
       setTransactions((prev) =>
         prev.map((t) => (t.transaccion_id === tx.transaccion_id ? res.data : t))
       );
       syncBanks().catch(console.error);
       showSnackbar("Transacción actualizada con éxito");
+      setLoading(false);
       return res.data;
     });
 
   const handleDeleteTransaction = () => {
+    setLoading(true);
     if (transactionToDelete == null) return;
     deleteTransaction(transactionToDelete).then(() => {
       setTransactions((prev) =>
@@ -179,6 +184,7 @@ export default function Home() {
       );
       syncBanks().catch(console.error);
       showSnackbar("Transacción eliminada con éxito");
+      setLoading(false);
       setOpenConfirmDialog(false);
     });
   };
