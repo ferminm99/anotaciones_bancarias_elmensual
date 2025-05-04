@@ -135,14 +135,16 @@ export default function Home() {
   const pageTx = processedTransactions.slice(first, last);
 
   // ── Handlers CRUD ──
-  const handleAddTransaction = (data: CreateTransaction) =>
-    addTransaction({
-      ...data,
-      fecha: new Date(data.fecha).toISOString(),
-    }).then((res) => {
-      setLoading(true);
+  const handleAddTransaction = async (data: CreateTransaction) => {
+    setLoading(true);
+    try {
+      const res = await addTransaction({
+        ...data,
+        fecha: new Date(data.fecha).toISOString(),
+      });
+
       setTransactions((prev) => [res.data, ...prev]);
-      // si crea cliente nuevo:
+
       if (data.cliente_id === null && res.data.cliente_id) {
         const nc: Cliente = {
           cliente_id: res.data.cliente_id!,
@@ -156,24 +158,40 @@ export default function Home() {
             : [...prev, nc]
         );
       }
-      // refrescar saldo vía trigger backend
-      syncBanks().catch(console.error);
-      showSnackbar("Transacción agregada con éxito");
-      setLoading(false);
-      return res.data;
-    });
 
-  const handleUpdateTransaction = (tx: Transaction) =>
-    updateTransaction(tx.transaccion_id, tx).then((res) => {
-      setLoading(true);
+      await syncBanks();
+      showSnackbar("Transacción agregada con éxito");
+      return res;
+    } catch (err) {
+      showSnackbar("Error al agregar transacción", "error");
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateTransaction = async (tx: Transaction) => {
+    setLoading(true);
+    try {
+      const res = await updateTransaction(tx.transaccion_id, tx);
+
       setTransactions((prev) =>
         prev.map((t) => (t.transaccion_id === tx.transaccion_id ? res.data : t))
       );
-      syncBanks().catch(console.error);
+
+      await syncBanks();
       showSnackbar("Transacción actualizada con éxito");
+      setTransactionToEdit(null);
+      return res;
+    } catch (err) {
+      showSnackbar("Error al actualizar transacción", "error");
+      console.error(err);
+      throw err;
+    } finally {
       setLoading(false);
-      return res.data;
-    });
+    }
+  };
 
   const handleDeleteTransaction = () => {
     setLoading(true);
