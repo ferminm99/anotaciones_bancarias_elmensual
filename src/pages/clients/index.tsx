@@ -13,23 +13,53 @@ import AddClienteButton from "../../app/components/Clients/ClientsButtonAdd";
 import ConfirmDialog from "../../app/components/ConfirmDialog";
 import EditClientButton from "../../app/components/Clients/ClientEditButton";
 import type { Cliente } from "../../app/types";
+import { Pagination } from "@mui/material";
 
-const Clientes: React.FC = () => {
+const ROWS_PER_PAGE = 8;
+
+const ClientesPage: React.FC = () => {
+  // 0) Cache y setters
   const { clients, syncClients, setClients: setCacheClients } = useCache();
+
+  // 1) Estado local
   const [filtered, setFiltered] = useState<Cliente[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+
+  // 2) Diálogos
   const [openConfirm, setOpenConfirm] = useState(false);
   const [toDelete, setToDelete] = useState<number | null>(null);
   const [toEdit, setToEdit] = useState<Cliente | null>(null);
 
-  // 1) Mantener filtrado al cambiar cache
-  useEffect(() => {
-    setFiltered(clients);
-  }, [clients]);
-
+  // 3) Al montar, sólo sincronizo cambios de clientes
   useEffect(() => {
     syncClients().catch(console.error);
   }, []);
+
+  // 4) Cada vez que muda el cache o cambia el término de búsqueda:
+  //    reaplico filtro y reset de página a 1
+  useEffect(() => {
+    const term = searchTerm
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+    const f = clients.filter((c) =>
+      `${c.nombre} ${c.apellido ?? ""}`
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .includes(term)
+    );
+
+    setFiltered(f);
+    setPage(1);
+  }, [clients, searchTerm]);
+
+  // 5) Handlers CRUD
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
 
   const handleAdd = (data: { nombre: string; apellido: string }) => {
     addCliente(data)
@@ -62,7 +92,6 @@ const Clientes: React.FC = () => {
       apellido: data.apellido ?? "",
     })
       .then(() => {
-        // Al retornar 200, actualizo el caché local
         setCacheClients((prev) =>
           prev.map((c) =>
             c.cliente_id === data.cliente_id
@@ -83,25 +112,15 @@ const Clientes: React.FC = () => {
       });
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const term = e.target.value
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-    setSearchTerm(term);
-    setFiltered(
-      clients.filter((c) =>
-        `${c.nombre} ${c.apellido}`
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .includes(term)
-      )
-    );
-  };
+  // 6) Paginación
+  const pageCount = Math.ceil(filtered.length / ROWS_PER_PAGE);
+  const first = (page - 1) * ROWS_PER_PAGE;
+  const last = first + ROWS_PER_PAGE;
+  const pageItems = filtered.slice(first, last);
 
   return (
     <div className="max-w-5xl mx-auto px-4">
+      {/* Barra superior */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Clientes</h1>
         <div className="flex items-center space-x-4">
@@ -116,12 +135,24 @@ const Clientes: React.FC = () => {
         </div>
       </div>
 
+      {/* Tabla recibe sólo la página actual */}
       <ClienteTable
-        clientes={filtered}
+        clientes={pageItems}
         onEdit={handleEdit}
         onDelete={confirmDelete}
       />
 
+      {/* Paginación */}
+      <div className="flex justify-center mt-4">
+        <Pagination
+          count={pageCount}
+          page={page}
+          onChange={(_, v) => setPage(v)}
+          color="primary"
+        />
+      </div>
+
+      {/* Diálogo confirmación eliminación */}
       <ConfirmDialog
         open={openConfirm}
         title="Confirmar Eliminación"
@@ -130,6 +161,7 @@ const Clientes: React.FC = () => {
         onCancel={() => setOpenConfirm(false)}
       />
 
+      {/* Diálogo edición */}
       {toEdit && (
         <EditClientButton
           clientToEdit={toEdit}
@@ -141,4 +173,4 @@ const Clientes: React.FC = () => {
   );
 };
 
-export default Clientes;
+export default ClientesPage;
