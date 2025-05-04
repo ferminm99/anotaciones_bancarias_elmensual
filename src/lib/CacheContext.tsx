@@ -230,18 +230,21 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   // 11) Auto‐sync inicial + cada 24h
+  // Auto‐sync inicial + cada 24h
   useEffect(() => {
     if (!hydrated) return;
     console.log("[Cache] starting initial syncAll");
     syncAll().catch((e) => console.error("[Cache] syncAll error (initial)", e));
+
     const iv = setInterval(() => {
       console.log("[Cache] interval syncAll");
       syncAll().catch((e) =>
         console.error("[Cache] syncAll error (interval)", e)
       );
     }, 24 * 3600 * 1000);
+
     return () => clearInterval(iv);
-  }, [hydrated, syncAll]);
+  }, [hydrated]); // <-- ahora solo depende de 'hydrated'
 
   // 12) Persist en localStorage tras cualquier cambio
   useEffect(() => {
