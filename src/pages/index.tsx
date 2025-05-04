@@ -167,6 +167,7 @@ export default function Home() {
       );
       syncBanks().catch(console.error);
       showSnackbar("Transacción actualizada con éxito");
+      setTransactionToEdit(null); // <- cerrar el modal
       return res.data;
     });
 
