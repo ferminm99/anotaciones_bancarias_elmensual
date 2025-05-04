@@ -1,6 +1,8 @@
 // src/app/index.tsx
 
-import { useEffect, useState } from "react";
+"use client";
+
+import React, { useEffect, useState, useMemo } from "react";
 import {
   deleteTransaction,
   addTransaction,
@@ -18,15 +20,48 @@ import type {
   Cliente,
   CreateTransaction,
 } from "../app/types";
-import { Pagination } from "@mui/material";
+import {
+  Pagination,
+  Box,
+  CircularProgress,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 
 export default function Home() {
-  // 2) filtrado local
-  const [filteredTransactions, setFilteredTransactions] = useState<
-    Transaction[]
-  >([]);
+  // ── UI state ──
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const transactionsPerPage = 10;
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+  const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<number | null>(
+    null
+  );
+  const [transactionToEdit, setTransactionToEdit] =
+    useState<Transaction | null>(null);
 
-  // 3) cache global
+  const showSnackbar = (
+    message: string,
+    severity: "success" | "error" = "success"
+  ) => {
+    setSnackbar({ open: true, message, severity });
+  };
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  // ── Cache global ──
   const {
     transactions,
     banks,
@@ -37,173 +72,148 @@ export default function Home() {
     syncBanks,
   } = useCache();
 
-  // 4) variables UI
-  const [totalSaldo, setTotalSaldo] = useState(0);
-  const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
-  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
-  const [transactionToDelete, setTransactionToDelete] = useState<number | null>(
-    null
-  );
-  const [transactionToEdit, setTransactionToEdit] =
-    useState<Transaction | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const transactionsPerPage = 10;
-
-  // — sync al montar
+  // ── 1) Al montar, levantamos banco guardado ──
   useEffect(() => {
-    if (banks.length === 0) return;
+    if (!banks.length) return;
     const saved = localStorage.getItem("selectedBank");
     setSelectedBank(saved ? JSON.parse(saved) : banks[0]);
   }, [banks]);
 
+  // ── 2) Primera sincronización ──
   useEffect(() => {
-    syncAll().catch(console.error);
+    syncAll()
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-  // — recalcular saldo y filtrado cuando cambian cache o banco seleccionado
-  useEffect(() => {
-    console.log("[Home] recalc saldo y filtro → banco:", selectedBank);
-    setTotalSaldo(banks.reduce((sum, b) => sum + b.saldo_total, 0));
+  // ── 3) Total de saldos (para el dropdown) ──
+  const totalSaldo = useMemo(
+    () => banks.reduce((sum, b) => sum + b.saldo_total, 0),
+    [banks]
+  );
 
-    if (selectedBank) {
-      setFilteredTransactions(
-        transactions.filter((tx) => tx.banco_id === selectedBank.banco_id)
-      );
-    } else {
-      setFilteredTransactions(transactions);
+  // ── 4) Lista procesada: filtro de banco + búsqueda + orden ──
+  const processedTransactions = useMemo(() => {
+    let arr = selectedBank
+      ? transactions.filter((tx) => tx.banco_id === selectedBank.banco_id)
+      : [...transactions];
+
+    // búsqueda
+    if (searchTerm.trim()) {
+      const term = searchTerm
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+      arr = arr.filter((tx) => {
+        const name = tx.nombre_cliente?.toLowerCase() ?? "";
+        return (
+          name.includes(term) ||
+          tx.tipo.toLowerCase().includes(term) ||
+          tx.monto?.toString().includes(term)
+        );
+      });
     }
-  }, [transactions, banks, selectedBank]);
 
-  // — agregar
-  const handleAddTransaction = (data: CreateTransaction) => {
-    return addTransaction({
+    // orden: fecha ↓, cliente ↑, tipo ↑
+    arr.sort((a, b) => {
+      const d = new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+      if (d !== 0) return d;
+      const na = (a.nombre_cliente || "").toLowerCase();
+      const nb = (b.nombre_cliente || "").toLowerCase();
+      const cmp = na.localeCompare(nb);
+      if (cmp !== 0) return cmp;
+      return a.tipo.localeCompare(b.tipo);
+    });
+
+    return arr;
+  }, [transactions, selectedBank, searchTerm]);
+
+  // ── 5) Slice para paginación ──
+  const last = currentPage * transactionsPerPage;
+  const first = last - transactionsPerPage;
+  const pageTx = processedTransactions.slice(first, last);
+
+  // ── Handlers CRUD ──
+  const handleAddTransaction = (data: CreateTransaction) =>
+    addTransaction({
       ...data,
       fecha: new Date(data.fecha).toISOString(),
-    })
-      .then((res) => {
-        const newTx: Transaction = { ...res.data };
-        setTransactions((prev) => [newTx, ...prev]);
-        if (!selectedBank || newTx.banco_id === selectedBank.banco_id) {
-          setFilteredTransactions((prev) => [newTx, ...prev]);
-        }
-        // si cliente nuevo
-        if (data.cliente_id === null && res.data.cliente_id) {
-          const newClient: Cliente = {
-            cliente_id: res.data.cliente_id,
-            nombre: res.data.nombre_cliente?.split(" ")[0] ?? "",
-            apellido:
-              res.data.nombre_cliente?.split(" ").slice(1).join(" ") ?? "",
-            updated_at: new Date().toISOString(),
-          };
-          setClients((prev) =>
-            prev.some((c) => c.cliente_id === newClient.cliente_id)
-              ? prev
-              : [...prev, newClient]
-          );
-        }
-        syncBanks().catch(console.error);
-        return res.data;
-      })
-      .catch((e) => {
-        console.error(e);
-        throw e;
-      });
-  };
-
-  // — editar
-  const handleUpdateTransaction = (tx: Transaction) => {
-    return updateTransaction(tx.transaccion_id, tx)
-      .then((res) => {
-        setTransactions((prev) =>
-          prev.map((t) =>
-            t.transaccion_id === tx.transaccion_id ? res.data : t
-          )
+    }).then((res) => {
+      setTransactions((prev) => [res.data, ...prev]);
+      // si crea cliente nuevo:
+      if (data.cliente_id === null && res.data.cliente_id) {
+        const nc: Cliente = {
+          cliente_id: res.data.cliente_id!,
+          nombre: res.data.nombre_cliente!.split(" ")[0],
+          apellido: res.data.nombre_cliente!.split(" ").slice(1).join(" "),
+          updated_at: new Date().toISOString(),
+        };
+        setClients((prev) =>
+          prev.some((c) => c.cliente_id === nc.cliente_id)
+            ? prev
+            : [...prev, nc]
         );
-        setFilteredTransactions((prev) =>
-          prev.map((t) =>
-            t.transaccion_id === tx.transaccion_id ? res.data : t
-          )
-        );
-        if (res.data.cliente_id) {
-          const newClient: Cliente = {
-            cliente_id: res.data.cliente_id,
-            nombre: res.data.nombre_cliente?.split(" ")[0] ?? "",
-            apellido:
-              res.data.nombre_cliente?.split(" ").slice(1).join(" ") ?? "",
-            updated_at: new Date().toISOString(),
-          };
-          setClients((prev) =>
-            prev.some((c) => c.cliente_id === newClient.cliente_id)
-              ? prev
-              : [...prev, newClient]
-          );
-        }
-        syncBanks().catch(console.error);
-        return res.data;
-      })
-      .catch((e) => {
-        console.error(e);
-        throw e;
-      });
-  };
+      }
+      // refrescar saldo vía trigger backend
+      syncBanks().catch(console.error);
+      showSnackbar("Transacción agregada con éxito");
+      return res.data;
+    });
 
-  // — eliminar
+  const handleUpdateTransaction = (tx: Transaction) =>
+    updateTransaction(tx.transaccion_id, tx).then((res) => {
+      setTransactions((prev) =>
+        prev.map((t) => (t.transaccion_id === tx.transaccion_id ? res.data : t))
+      );
+      syncBanks().catch(console.error);
+      showSnackbar("Transacción actualizada con éxito");
+      return res.data;
+    });
+
   const handleDeleteTransaction = () => {
     if (transactionToDelete == null) return;
     deleteTransaction(transactionToDelete).then(() => {
       setTransactions((prev) =>
         prev.filter((t) => t.transaccion_id !== transactionToDelete)
       );
-      setFilteredTransactions((prev) =>
-        prev.filter((t) => t.transaccion_id !== transactionToDelete)
-      );
       syncBanks().catch(console.error);
+      showSnackbar("Transacción eliminada con éxito");
       setOpenConfirmDialog(false);
     });
   };
 
-  // — filtrar por banco
-  const filterByBank = (b: Bank | null) => {
-    setSelectedBank(b);
-    if (b) localStorage.setItem("selectedBank", JSON.stringify(b));
-    else localStorage.removeItem("selectedBank");
-    setCurrentPage(1);
-  };
-
-  // — búsqueda
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const term = e.target.value
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-    setSearchTerm(term);
-    setFilteredTransactions(
-      transactions.filter((tx) => {
-        if (selectedBank && tx.banco_id !== selectedBank.banco_id) return false;
-        const name = tx.nombre_cliente ?? "";
-        return (
-          name.toLowerCase().includes(term) ||
-          tx.tipo.toLowerCase().includes(term) ||
-          tx.monto?.toString().includes(term)
-        );
-      })
+  // ── UI ──
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          height: "80vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress size={60} />
+      </Box>
     );
-  };
-
-  // — paginación
-  const last = currentPage * transactionsPerPage;
-  const first = last - transactionsPerPage;
-  const pageTx = filteredTransactions.slice(first, last);
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-4">
       <h1 className="text-4xl font-bold mb-6">Transacciones</h1>
+
+      {/* filtros + búsqueda + botón nueva transacción */}
       <div className="flex justify-between items-center mb-4">
         <FilterByBank
           banks={banks}
           selectedBank={selectedBank}
-          onFilter={filterByBank}
+          onFilter={(b) => {
+            setSelectedBank(b);
+            b
+              ? localStorage.setItem("selectedBank", JSON.stringify(b))
+              : localStorage.removeItem("selectedBank");
+            setCurrentPage(1);
+          }}
           totalSaldo={totalSaldo}
         />
         <div className="flex items-center space-x-4">
@@ -211,7 +221,7 @@ export default function Home() {
             type="text"
             placeholder="Buscar..."
             value={searchTerm}
-            onChange={handleSearch}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="border p-2 rounded"
           />
           <AddTransactionButton
@@ -224,6 +234,7 @@ export default function Home() {
         </div>
       </div>
 
+      {/* tabla y paginación */}
       <TransactionTable
         transactions={pageTx}
         onEdit={(tx) => setTransactionToEdit(tx)}
@@ -232,16 +243,16 @@ export default function Home() {
           setOpenConfirmDialog(true);
         }}
       />
-
       <div className="flex justify-end mt-4">
         <Pagination
-          count={Math.ceil(filteredTransactions.length / transactionsPerPage)}
+          count={Math.ceil(processedTransactions.length / transactionsPerPage)}
           page={currentPage}
           onChange={(_, v) => setCurrentPage(v)}
           color="primary"
         />
       </div>
 
+      {/* modal editar */}
       {transactionToEdit && (
         <EditTransactionButton
           transactionToEdit={transactionToEdit}
@@ -253,6 +264,7 @@ export default function Home() {
         />
       )}
 
+      {/* confirm delete */}
       <ConfirmDialog
         open={openConfirmDialog}
         title="Confirmar eliminación"
@@ -260,6 +272,20 @@ export default function Home() {
         onConfirm={handleDeleteTransaction}
         onCancel={() => setOpenConfirmDialog(false)}
       />
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }

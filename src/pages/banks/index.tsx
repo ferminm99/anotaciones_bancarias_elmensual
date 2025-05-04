@@ -1,7 +1,7 @@
 // src/app/banks/page.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useCache } from "@/lib/CacheContext";
 import { addBank, updateBank, deleteBank } from "../../app/services/api";
 import BankTable from "../../app/components/Banks/BankTable";
@@ -9,38 +9,64 @@ import AddBankButton from "../../app/components/Banks/AddBankButton";
 import ConfirmDialog from "../../app/components/ConfirmDialog";
 import EditBankButton from "../../app/components/Banks/EditBankButton";
 import type { Bank } from "../../app/types";
-import { Pagination } from "@mui/material";
+import {
+  Pagination,
+  Box,
+  CircularProgress,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 
 const ROWS_PER_PAGE = 8;
 
 const BanksPage: React.FC = () => {
-  // 0) Cache y setters
+  // ── Cache global ──
   const { banks, syncBanks, setBanks: setCacheBanks } = useCache();
 
-  // 1) Estado local
-  const [filtered, setFiltered] = useState<Bank[]>([]);
+  // ── UI state ──
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
-
-  // 2) Diálogos
+  const [loading, setLoading] = useState(true);
   const [openConfirm, setOpenConfirm] = useState(false);
   const [toDelete, setToDelete] = useState<number | null>(null);
   const [toEdit, setToEdit] = useState<Bank | null>(null);
 
-  // 3) Al montar, sincronizo sólo bancos
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const showSnackbar = (
+    message: string,
+    severity: "success" | "error" = "success"
+  ) => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  // ── 1) Primera sincronización ──
   useEffect(() => {
-    syncBanks().catch(console.error);
+    syncBanks()
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-  // 4) Cada vez que cambian `banks` o `searchTerm`,
-  //    reaplico filtro + ordeno + reset de página
-  useEffect(() => {
+  // ── 2) Pipeline: filtro + búsqueda + orden ──
+  const processedBanks = useMemo(() => {
     const term = searchTerm
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
 
-    const f = banks
+    return banks
       .filter((b) =>
         b.nombre
           .toLowerCase()
@@ -49,18 +75,20 @@ const BanksPage: React.FC = () => {
           .includes(term)
       )
       .sort((a, b) => a.nombre.localeCompare(b.nombre));
-
-    setFiltered(f);
-    setPage(1);
   }, [banks, searchTerm]);
 
-  // 5) Handlers CRUD
+  // ── 3) Paginación sobre el array procesado ──
+  const pageCount = Math.ceil(processedBanks.length / ROWS_PER_PAGE);
+  const first = (page - 1) * ROWS_PER_PAGE;
+  const pageItems = processedBanks.slice(first, first + ROWS_PER_PAGE);
+
+  // ── Handlers CRUD ──
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    setPage(1);
   };
 
   const handleAdd = (data: { nombre: string; saldo_total: number }) => {
-    // Previene duplicados por nombre
     if (
       banks.some((b) => b.nombre.toLowerCase() === data.nombre.toLowerCase())
     ) {
@@ -70,6 +98,7 @@ const BanksPage: React.FC = () => {
     addBank(data)
       .then((res) => {
         setCacheBanks((prev) => [...prev, res.data]);
+        showSnackbar("Transacción agregada con éxito");
       })
       .catch((err) => console.error("Error al agregar banco:", err));
   };
@@ -84,6 +113,7 @@ const BanksPage: React.FC = () => {
       .then(() => {
         setCacheBanks((prev) => prev.filter((b) => b.banco_id !== toDelete));
         setOpenConfirm(false);
+        showSnackbar("Transacción eliminada con éxito");
       })
       .catch((err) => console.error("Error al eliminar banco:", err));
   };
@@ -92,7 +122,6 @@ const BanksPage: React.FC = () => {
     setToEdit(bank);
   };
   const handleUpdate = (data: Bank) => {
-    // Previene duplicados por nombre en otro registro
     if (
       banks.some(
         (b) =>
@@ -103,7 +132,7 @@ const BanksPage: React.FC = () => {
       alert("Ya existe otro banco con este nombre.");
       return;
     }
-    // Actualizo cache inmediatamente
+    // Actualizamos caché inmediatamente (y marcamos updated_at)
     setCacheBanks((prev) =>
       prev.map((b) =>
         b.banco_id === data.banco_id
@@ -112,19 +141,33 @@ const BanksPage: React.FC = () => {
       )
     );
     updateBank(data.banco_id, data)
-      .then(() => setToEdit(null))
+      .then(() => {
+        showSnackbar("Transacción actualizada con éxito");
+        setToEdit(null);
+      })
       .catch((err) => {
         console.error("Error al actualizar banco:", err);
         alert("No se pudo actualizar el banco.");
       });
   };
 
-  // 6) Paginación
-  const pageCount = Math.ceil(filtered.length / ROWS_PER_PAGE);
-  const first = (page - 1) * ROWS_PER_PAGE;
-  const last = first + ROWS_PER_PAGE;
-  const pageItems = filtered.slice(first, last);
+  // ── Loading ──
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          height: "80vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress size={60} />
+      </Box>
+    );
+  }
 
+  // ── Render ──
   return (
     <div className="max-w-5xl mx-auto px-4">
       {/* Barra superior */}
@@ -142,7 +185,7 @@ const BanksPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabla recibe sólo la página actual */}
+      {/* Tabla paginada */}
       <BankTable
         banks={pageItems}
         onEdit={handleEdit}
@@ -159,7 +202,7 @@ const BanksPage: React.FC = () => {
         />
       </div>
 
-      {/* Diálogo confirmación eliminación */}
+      {/* Confirmación de borrado */}
       <ConfirmDialog
         open={openConfirm}
         title="Confirmar Eliminación"
@@ -168,7 +211,7 @@ const BanksPage: React.FC = () => {
         onCancel={() => setOpenConfirm(false)}
       />
 
-      {/* Diálogo edición */}
+      {/* Modal de edición */}
       {toEdit && (
         <EditBankButton
           bankToEdit={toEdit}
@@ -176,6 +219,20 @@ const BanksPage: React.FC = () => {
           onClose={() => setToEdit(null)}
         />
       )}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

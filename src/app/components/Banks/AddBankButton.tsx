@@ -49,7 +49,7 @@ const AddBankButton: React.FC<AddBankButtonProps> = ({ onSubmit }) => {
     const saldoNumerico = parseFloat(
       saldoTotal.replace(/\./g, "").replace(",", ".")
     );
-    if (!nombre || saldoNumerico <= 0) {
+    if (!nombre || isNaN(saldoNumerico) || saldoNumerico <= 0) {
       alert("Por favor, completa todos los campos.");
       return;
     }

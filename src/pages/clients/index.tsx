@@ -1,7 +1,7 @@
 // src/app/clientes/page.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   addCliente,
   updateCliente,
@@ -13,58 +13,93 @@ import AddClienteButton from "../../app/components/Clients/ClientsButtonAdd";
 import ConfirmDialog from "../../app/components/ConfirmDialog";
 import EditClientButton from "../../app/components/Clients/ClientEditButton";
 import type { Cliente } from "../../app/types";
-import { Pagination } from "@mui/material";
+import {
+  Pagination,
+  Box,
+  CircularProgress,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 
 const ROWS_PER_PAGE = 8;
 
 const ClientesPage: React.FC = () => {
-  // 0) Cache y setters
+  // ── Cache global ──
   const { clients, syncClients, setClients: setCacheClients } = useCache();
 
-  // 1) Estado local
-  const [filtered, setFiltered] = useState<Cliente[]>([]);
+  // ── UI state ──
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
-
-  // 2) Diálogos
+  const [loading, setLoading] = useState(true);
   const [openConfirm, setOpenConfirm] = useState(false);
   const [toDelete, setToDelete] = useState<number | null>(null);
   const [toEdit, setToEdit] = useState<Cliente | null>(null);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
-  // 3) Al montar, sólo sincronizo cambios de clientes
+  const showSnackbar = (
+    message: string,
+    severity: "success" | "error" = "success"
+  ) => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  // ── 1) Primera sincronización ──
   useEffect(() => {
-    syncClients().catch(console.error);
+    syncClients()
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-  // 4) Cada vez que muda el cache o cambia el término de búsqueda:
-  //    reaplico filtro y reset de página a 1
-  useEffect(() => {
+  // ── 2) Pipeline: filtro + búsqueda + orden ──
+  const processedClients = useMemo(() => {
     const term = searchTerm
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
 
-    const f = clients.filter((c) =>
-      `${c.nombre} ${c.apellido ?? ""}`
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .includes(term)
-    );
-
-    setFiltered(f);
-    setPage(1);
+    return clients
+      .filter((c) =>
+        `${c.nombre} ${c.apellido ?? ""}`
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .includes(term)
+      )
+      .sort((a, b) => {
+        const cmpNombre = a.nombre.localeCompare(b.nombre);
+        if (cmpNombre !== 0) return cmpNombre;
+        return (a.apellido ?? "").localeCompare(b.apellido ?? "");
+      });
   }, [clients, searchTerm]);
 
-  // 5) Handlers CRUD
+  // ── 3) Paginación sobre el array procesado ──
+  const pageCount = Math.ceil(processedClients.length / ROWS_PER_PAGE);
+  const first = (page - 1) * ROWS_PER_PAGE;
+  const pageItems = processedClients.slice(first, first + ROWS_PER_PAGE);
+
+  // ── Handlers CRUD ──
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    setPage(1);
   };
 
   const handleAdd = (data: { nombre: string; apellido: string }) => {
     addCliente(data)
       .then((res) => {
         setCacheClients((prev) => [...prev, res.data]);
+        showSnackbar("Transacción agregada con éxito");
       })
       .catch((err) => console.error("Error al agregar cliente:", err));
   };
@@ -80,6 +115,7 @@ const ClientesPage: React.FC = () => {
         setCacheClients((prev) =>
           prev.filter((c) => c.cliente_id !== toDelete)
         );
+        showSnackbar("Transacción eliminada con éxito");
         setOpenConfirm(false);
       })
       .catch((err) => console.error("Error al eliminar cliente:", err));
@@ -98,12 +134,13 @@ const ClientesPage: React.FC = () => {
               ? {
                   ...c,
                   nombre: data.nombre,
-                  apellido: data.apellido,
+                  apellido: data.apellido ?? "",
                   updated_at: new Date().toISOString(),
                 }
               : c
           )
         );
+        showSnackbar("Transacción actualizada con éxito");
         setToEdit(null);
       })
       .catch((err) => {
@@ -112,12 +149,23 @@ const ClientesPage: React.FC = () => {
       });
   };
 
-  // 6) Paginación
-  const pageCount = Math.ceil(filtered.length / ROWS_PER_PAGE);
-  const first = (page - 1) * ROWS_PER_PAGE;
-  const last = first + ROWS_PER_PAGE;
-  const pageItems = filtered.slice(first, last);
+  // ── Loading ──
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          height: "80vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress size={60} />
+      </Box>
+    );
+  }
 
+  // ── Render ──
   return (
     <div className="max-w-5xl mx-auto px-4">
       {/* Barra superior */}
@@ -135,7 +183,7 @@ const ClientesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabla recibe sólo la página actual */}
+      {/* Tabla paginada */}
       <ClienteTable
         clientes={pageItems}
         onEdit={handleEdit}
@@ -152,7 +200,7 @@ const ClientesPage: React.FC = () => {
         />
       </div>
 
-      {/* Diálogo confirmación eliminación */}
+      {/* Confirmación de borrado */}
       <ConfirmDialog
         open={openConfirm}
         title="Confirmar Eliminación"
@@ -161,7 +209,7 @@ const ClientesPage: React.FC = () => {
         onCancel={() => setOpenConfirm(false)}
       />
 
-      {/* Diálogo edición */}
+      {/* Modal de edición */}
       {toEdit && (
         <EditClientButton
           clientToEdit={toEdit}
@@ -169,6 +217,20 @@ const ClientesPage: React.FC = () => {
           onClose={() => setToEdit(null)}
         />
       )}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

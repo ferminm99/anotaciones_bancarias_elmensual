@@ -58,22 +58,45 @@ const EditBankButton: React.FC<EditBankButtonProps> = ({
   };
 
   const handleSubmit = () => {
-    if (bank) {
-      // Convertimos el saldo a número antes de enviarlo
-      const saldoNumerico = parseFloat(
-        newSaldoTotal.replace(/\./g, "").replace(",", ".")
-      );
-      onSubmit({ ...bank, saldo_total: saldoNumerico });
+    if (!bank) return;
+
+    const nombre = bank.nombre.trim();
+    const saldoNumerico = parseFloat(
+      newSaldoTotal.replace(/\./g, "").replace(",", ".")
+    );
+
+    if (!nombre) {
+      alert("El nombre del banco no puede estar vacío.");
+      return;
     }
+
+    if (isNaN(saldoNumerico) || saldoNumerico <= 0) {
+      alert("El saldo debe ser un número mayor que cero.");
+      return;
+    }
+
+    onSubmit({ ...bank, nombre, saldo_total: saldoNumerico });
   };
 
   const handleConfirmChange = () => {
-    if (bank) {
-      const saldoNumerico = parseFloat(
-        newSaldoTotal.replace(/\./g, "").replace(",", ".")
-      );
-      onSubmit({ ...bank, saldo_total: saldoNumerico });
+    if (!bank) return;
+
+    const nombre = bank.nombre.trim();
+    const saldoNumerico = parseFloat(
+      newSaldoTotal.replace(/\./g, "").replace(",", ".")
+    );
+
+    if (!nombre) {
+      alert("El nombre del banco no puede estar vacío.");
+      return;
     }
+
+    if (isNaN(saldoNumerico) || saldoNumerico <= 0) {
+      alert("El saldo debe ser un número mayor que cero.");
+      return;
+    }
+
+    onSubmit({ ...bank, nombre, saldo_total: saldoNumerico });
     setConfirmChange(false);
   };
 
