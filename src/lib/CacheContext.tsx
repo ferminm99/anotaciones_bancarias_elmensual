@@ -65,6 +65,7 @@ interface CacheState {
   clients: CacheCliente[];
   cheques: CacheCheque[];
   lastSync: string;
+  hydrated: boolean;
   syncAll: () => Promise<void>;
   syncBanks: () => Promise<void>;
   syncClients: () => Promise<void>;
@@ -90,11 +91,11 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({
   // 6) Hydrate desde localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
-    console.log("[Cache] Hydrating from localStorage…");
+    // console.log("[Cache] Hydrating from localStorage…");
 
     const ls = localStorage.getItem("cache.lastSync");
     if (ls) {
-      console.log("[Cache] loaded lastSync =", ls);
+      // console.log("[Cache] loaded lastSync =", ls);
       setLastSync(ls);
     }
 
@@ -105,7 +106,7 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({
       const v = localStorage.getItem(key);
       if (v) {
         const arr = JSON.parse(v) as T[];
-        console.log(`[Cache] restored ${key} (${arr.length} items)`);
+        // console.log(`[Cache] restored ${key} (${arr.length} items)`);
         setter(arr);
       }
     };
@@ -116,7 +117,7 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({
     loadKey<CacheCheque>("cache.cheques", setCheques);
 
     setHydrated(true);
-    console.log("[Cache] hydration complete");
+    // console.log("[Cache] hydration complete");
   }, []);
 
   // 7) Helper genérico para lista completa o cambios
@@ -126,10 +127,10 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({
     since: string
   ): Promise<T[]> {
     if (!since) {
-      console.log("[Cache] doing full list");
+      // console.log("[Cache] doing full list");
       return (await listFn()).data;
     } else {
-      console.log(`[Cache] doing delta list since=${since}`);
+      // console.log(`[Cache] doing delta list since=${since}`);
       return (await changesFn(since)).data;
     }
   }
@@ -164,12 +165,12 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({
 
   // 9) Función central de sincronización
   async function doSync<K extends ResourceKey>(keys: K[]) {
-    console.log(`[Cache] doSync start for [${keys.join(", ")}]`);
+    // console.log(`[Cache] doSync start for [${keys.join(", ")}]`);
     const dates: string[] = [];
 
     for (const key of keys) {
       const { setter, listFn, changesFn, keyField } = mapping[key];
-      console.log(`[Cache] syncing "${key}"…`);
+      // console.log(`[Cache] syncing "${key}"…`);
 
       let newItems: ResourceMap[K][];
       try {
@@ -179,11 +180,11 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({
           lastSync
         );
       } catch {
-        console.warn(`[Cache] skip "${key}" due to fetch error`);
+        // console.warn(`[Cache] skip "${key}" due to fetch error`);
         continue;
       }
 
-      console.log(`[Cache] fetched ${newItems.length} new items for "${key}"`);
+      // console.log(`[Cache] fetched ${newItems.length} new items for "${key}"`);
 
       setter((old) => {
         // 9.1) filtramos los viejos que no están en newItems
@@ -208,24 +209,24 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({
 
     if (dates.length > 0) {
       const newest = dates.sort().pop()!;
-      console.log("[Cache] updating lastSync →", newest);
+      // console.log("[Cache] updating lastSync →", newest);
       setLastSync(newest);
     } else {
-      console.log("[Cache] no new items, lastSync stays", lastSync);
+      // console.log("[Cache] no new items, lastSync stays", lastSync);
     }
   }
 
   // 10) Exponemos sólo lo que necesita cada página
   const syncAll = async () => {
-    console.log("[Cache] syncAll called");
+    // console.log("[Cache] syncAll called");
     await doSync(["transactions", "banks", "clients", "cheques"]);
   };
   const syncBanks = async () => {
-    console.log("[Cache] syncBanks called");
+    // console.log("[Cache] syncBanks called");
     await doSync(["banks"]);
   };
   const syncClients = async () => {
-    console.log("[Cache] syncClients called");
+    // console.log("[Cache] syncClients called");
     await doSync(["clients"]);
   };
 
@@ -233,11 +234,11 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({
   // Auto‐sync inicial + cada 24h
   useEffect(() => {
     if (!hydrated) return;
-    console.log("[Cache] starting initial syncAll");
+    // console.log("[Cache] starting initial syncAll");
     syncAll().catch((e) => console.error("[Cache] syncAll error (initial)", e));
 
     const iv = setInterval(() => {
-      console.log("[Cache] interval syncAll");
+      // console.log("[Cache] interval syncAll");
       syncAll().catch((e) =>
         console.error("[Cache] syncAll error (interval)", e)
       );
@@ -249,7 +250,7 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({
   // 12) Persist en localStorage tras cualquier cambio
   useEffect(() => {
     if (!hydrated) return;
-    console.log("[Cache] persisting to localStorage");
+    // console.log("[Cache] persisting to localStorage");
     localStorage.setItem("cache.lastSync", lastSync);
     localStorage.setItem("cache.transactions", JSON.stringify(transactions));
     localStorage.setItem("cache.banks", JSON.stringify(banks));
@@ -265,6 +266,7 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({
         clients,
         cheques,
         lastSync,
+        hydrated,
         syncAll,
         syncBanks,
         syncClients,

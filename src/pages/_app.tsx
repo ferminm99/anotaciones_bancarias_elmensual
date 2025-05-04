@@ -7,15 +7,15 @@ import jwt_decode from "jwt-decode";
 import { CacheProvider } from "@/lib/CacheContext";
 import Sidebar from "@/app/components/Layout/Sidebar";
 import "@/app/globals.css";
-
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Si estoy en la pantalla de login, me salto la validación
     if (router.pathname === "/login") {
       setIsAuthenticated(true);
+      setCheckingAuth(false);
       return;
     }
 
@@ -24,17 +24,20 @@ function MyApp({ Component, pageProps }: AppProps) {
       router.replace("/login");
       return;
     }
+
     try {
-      jwt_decode(token); // Lanzará si el token no es válido
+      jwt_decode(token);
       setIsAuthenticated(true);
     } catch {
       localStorage.removeItem("token");
       router.replace("/login");
+    } finally {
+      setCheckingAuth(false);
     }
   }, [router.pathname, router]);
 
-  // Mientras no sepamos si está autenticado, no renderizamos nada
-  if (!isAuthenticated) return null;
+  // ⛔ Nunca renderices `null`. Esperá a terminar el chequeo.
+  if (checkingAuth) return null;
 
   if (router.pathname === "/login") {
     return <Component {...pageProps} />;

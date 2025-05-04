@@ -57,6 +57,7 @@ export default function Home() {
 
   // ── Cache global ──
   const {
+    hydrated,
     transactions,
     banks,
     clients: clientes,
@@ -76,10 +77,12 @@ export default function Home() {
   // ── 2) Primera sincronización ──
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    if (!hydrated) return;
+    setLoading(true);
     syncAll()
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [hydrated]);
 
   // ── 3) Total de saldos (para el dropdown) ──
   const totalSaldo = useMemo(

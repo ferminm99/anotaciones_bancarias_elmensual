@@ -19,7 +19,12 @@ const ROWS_PER_PAGE = 8;
 
 const ClientesPage: React.FC = () => {
   // ── Cache global ──
-  const { clients, syncClients, setClients: setCacheClients } = useCache();
+  const {
+    clients,
+    syncClients,
+    setClients: setCacheClients,
+    hydrated,
+  } = useCache();
 
   // ── UI state ──
   const [searchTerm, setSearchTerm] = useState("");
@@ -52,10 +57,11 @@ const ClientesPage: React.FC = () => {
   // ── 1) Primera sincronización ──
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    if (!hydrated) return;
     syncClients()
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [hydrated]);
 
   // ── 2) Pipeline: filtro + búsqueda + orden ──
   const processedClients = useMemo(() => {

@@ -15,7 +15,7 @@ const ROWS_PER_PAGE = 8;
 
 const BanksPage: React.FC = () => {
   // ── Cache global ──
-  const { banks, syncBanks, setBanks: setCacheBanks } = useCache();
+  const { banks, syncBanks, setBanks: setCacheBanks, hydrated } = useCache();
 
   // ── UI state ──
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,10 +49,11 @@ const BanksPage: React.FC = () => {
   // ── 1) Primera sincronización ──
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    if (!hydrated) return;
     syncBanks()
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [hydrated]);
 
   // ── 2) Pipeline: filtro + búsqueda + orden ──
   const processedBanks = useMemo(() => {
