@@ -38,10 +38,24 @@ router.get("/", authenticateToken, (req, res) => {
 router.get("/changes", authenticateToken, (req, res) => {
   const since = req.query.since;
   const q = `
-       SELECT transaccion_id, fecha, tipo, monto, banco_id, cliente_id, cheque_id, updated_at
-       FROM transacciones
-       WHERE updated_at > $1
-     `;
+    SELECT 
+      t.transaccion_id,
+      t.fecha,
+      t.tipo,
+      t.monto,
+      t.banco_id,
+      t.cliente_id,
+      t.cheque_id,
+      t.updated_at,
+      b.nombre      AS nombre_banco,
+      CONCAT(c.nombre, ' ', COALESCE(c.apellido, '')) AS nombre_cliente,
+      ch.numero     AS numero_cheque
+    FROM transacciones t
+    JOIN bancos    b  ON t.banco_id   = b.banco_id
+    LEFT JOIN clientes c ON t.cliente_id = c.cliente_id
+    LEFT JOIN cheques  ch ON t.cheque_id  = ch.cheque_id
+    WHERE t.updated_at > $1
+  `;
   connection.query(q, [since], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(result.rows || []);
