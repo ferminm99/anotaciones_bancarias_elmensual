@@ -1,4 +1,4 @@
-// src/app/index.tsx
+// src/pages/index.tsx
 
 "use client";
 
@@ -80,6 +80,7 @@ export default function Home() {
   }, [banks]);
 
   // ── 2) Primera sincronización ──
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     syncAll()
       .catch(console.error)

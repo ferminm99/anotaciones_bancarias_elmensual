@@ -56,6 +56,7 @@ const ClientesPage: React.FC = () => {
   };
 
   // ── 1) Primera sincronización ──
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     syncClients()
       .catch(console.error)
