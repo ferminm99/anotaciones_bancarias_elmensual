@@ -9,13 +9,7 @@ import AddBankButton from "../../app/components/Banks/AddBankButton";
 import ConfirmDialog from "../../app/components/ConfirmDialog";
 import EditBankButton from "../../app/components/Banks/EditBankButton";
 import type { Bank } from "../../app/types";
-import {
-  Pagination,
-  Box,
-  CircularProgress,
-  Snackbar,
-  Alert,
-} from "@mui/material";
+import { Pagination, CircularProgress, Snackbar, Alert } from "@mui/material";
 
 const ROWS_PER_PAGE = 8;
 

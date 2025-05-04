@@ -13,13 +13,7 @@ import AddClienteButton from "../../app/components/Clients/ClientsButtonAdd";
 import ConfirmDialog from "../../app/components/ConfirmDialog";
 import EditClientButton from "../../app/components/Clients/ClientEditButton";
 import type { Cliente } from "../../app/types";
-import {
-  Pagination,
-  Box,
-  CircularProgress,
-  Snackbar,
-  Alert,
-} from "@mui/material";
+import { Pagination, CircularProgress, Snackbar, Alert } from "@mui/material";
 
 const ROWS_PER_PAGE = 8;
 

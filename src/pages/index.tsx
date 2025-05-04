@@ -20,13 +20,7 @@ import type {
   Cliente,
   CreateTransaction,
 } from "../app/types";
-import {
-  Pagination,
-  Box,
-  CircularProgress,
-  Snackbar,
-  Alert,
-} from "@mui/material";
+import { Pagination, CircularProgress, Snackbar, Alert } from "@mui/material";
 
 export default function Home() {
   // ── UI state ──
