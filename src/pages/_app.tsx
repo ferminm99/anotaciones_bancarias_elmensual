@@ -28,6 +28,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     try {
       jwt_decode(token);
       setIsAuthenticated(true);
+      console.log(isAuthenticated);
     } catch {
       localStorage.removeItem("token");
       router.replace("/login");
