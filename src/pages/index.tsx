@@ -34,6 +34,7 @@ export default function Home() {
     setTransactions,
     setClients,
     syncAll,
+    syncBanks,
   } = useCache();
 
   // 4) variables UI
@@ -101,6 +102,7 @@ export default function Home() {
               : [...prev, newClient]
           );
         }
+        syncBanks().catch(console.error);
         return res.data;
       })
       .catch((e) => {
@@ -137,6 +139,7 @@ export default function Home() {
               : [...prev, newClient]
           );
         }
+        syncBanks().catch(console.error);
         return res.data;
       })
       .catch((e) => {
@@ -155,6 +158,7 @@ export default function Home() {
       setFilteredTransactions((prev) =>
         prev.filter((t) => t.transaccion_id !== transactionToDelete)
       );
+      syncBanks().catch(console.error);
       setOpenConfirmDialog(false);
     });
   };
