@@ -154,89 +154,94 @@ const ClientesPage: React.FC = () => {
       });
   };
 
-  // ── Loading ──
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          height: "80vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <CircularProgress size={60} />
-      </Box>
-    );
-  }
-
   // ── Render ──
   return (
-    <div className="max-w-5xl mx-auto px-4">
-      {/* Barra superior */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Clientes</h1>
-        <div className="flex items-center space-x-4">
-          <input
-            type="text"
-            placeholder="Buscar por nombre o apellido..."
-            value={searchTerm}
-            onChange={handleSearch}
-            className="border p-2 rounded h-10 w-64"
-          />
-          <AddClienteButton onSubmit={handleAdd} />
-        </div>
-      </div>
-
-      {/* Tabla paginada */}
-      <ClienteTable
-        clientes={pageItems}
-        onEdit={handleEdit}
-        onDelete={confirmDelete}
-      />
-
-      {/* Paginación */}
-      <div className="flex justify-center mt-4">
-        <Pagination
-          count={pageCount}
-          page={page}
-          onChange={(_, v) => setPage(v)}
-          color="primary"
-        />
-      </div>
-
-      {/* Confirmación de borrado */}
-      <ConfirmDialog
-        open={openConfirm}
-        title="Confirmar Eliminación"
-        description="¿Estás seguro que deseas eliminar este cliente?"
-        onConfirm={handleDelete}
-        onCancel={() => setOpenConfirm(false)}
-      />
-
-      {/* Modal de edición */}
-      {toEdit && (
-        <EditClientButton
-          clientToEdit={toEdit}
-          onSubmit={handleUpdate}
-          onClose={() => setToEdit(null)}
-        />
-      )}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
+    <>
+      {loading && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(255, 255, 255, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            backdropFilter: "blur(2px)",
+          }}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </div>
+          <CircularProgress size={60} />
+        </div>
+      )}
+      <div className="max-w-5xl mx-auto px-4">
+        {/* Barra superior */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-semibold">Clientes</h1>
+          <div className="flex items-center space-x-4">
+            <input
+              type="text"
+              placeholder="Buscar por nombre o apellido..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className="border p-2 rounded h-10 w-64"
+            />
+            <AddClienteButton onSubmit={handleAdd} />
+          </div>
+        </div>
+
+        {/* Tabla paginada */}
+        <ClienteTable
+          clientes={pageItems}
+          onEdit={handleEdit}
+          onDelete={confirmDelete}
+        />
+
+        {/* Paginación */}
+        <div className="flex justify-center mt-4">
+          <Pagination
+            count={pageCount}
+            page={page}
+            onChange={(_, v) => setPage(v)}
+            color="primary"
+          />
+        </div>
+
+        {/* Confirmación de borrado */}
+        <ConfirmDialog
+          open={openConfirm}
+          title="Confirmar Eliminación"
+          description="¿Estás seguro que deseas eliminar este cliente?"
+          onConfirm={handleDelete}
+          onCancel={() => setOpenConfirm(false)}
+        />
+
+        {/* Modal de edición */}
+        {toEdit && (
+          <EditClientButton
+            clientToEdit={toEdit}
+            onSubmit={handleUpdate}
+            onClose={() => setToEdit(null)}
+          />
+        )}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity={snackbar.severity}
+            sx={{ width: "100%" }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </div>
+    </>
   );
 };
 

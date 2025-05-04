@@ -207,114 +207,121 @@ export default function Home() {
     });
   };
 
-  // ── UI ──
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          height: "80vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <CircularProgress size={60} />
-      </Box>
-    );
-  }
-
   return (
-    <div className="max-w-6xl mx-auto p-4">
-      <h1 className="text-4xl font-bold mb-6">Transacciones</h1>
-
-      {/* filtros + búsqueda + botón nueva transacción */}
-      <div className="flex justify-between items-center mb-4">
-        <FilterByBank
-          banks={banks}
-          selectedBank={selectedBank}
-          onFilter={(b) => {
-            setSelectedBank(b);
-
-            if (b) {
-              localStorage.setItem("selectedBank", JSON.stringify(b));
-            } else {
-              localStorage.removeItem("selectedBank");
-            }
-
-            setCurrentPage(1);
+    <>
+      {loading && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(255, 255, 255, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            backdropFilter: "blur(2px)",
           }}
-          totalSaldo={totalSaldo}
-        />
-        <div className="flex items-center space-x-4">
-          <input
-            type="text"
-            placeholder="Buscar..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="border p-2 rounded"
-          />
-          <AddTransactionButton
-            onSubmit={handleAddTransaction}
+        >
+          <CircularProgress size={60} />
+        </div>
+      )}
+      <div className="max-w-6xl mx-auto p-4">
+        <h1 className="text-4xl font-bold mb-6">Transacciones</h1>
+
+        {/* filtros + búsqueda + botón nueva transacción */}
+        <div className="flex justify-between items-center mb-4">
+          <FilterByBank
             banks={banks}
-            clientes={clientes}
-            setClients={setClients}
-            selectedBank={selectedBank ?? undefined}
+            selectedBank={selectedBank}
+            onFilter={(b) => {
+              setSelectedBank(b);
+
+              if (b) {
+                localStorage.setItem("selectedBank", JSON.stringify(b));
+              } else {
+                localStorage.removeItem("selectedBank");
+              }
+
+              setCurrentPage(1);
+            }}
+            totalSaldo={totalSaldo}
+          />
+          <div className="flex items-center space-x-4">
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="border p-2 rounded"
+            />
+            <AddTransactionButton
+              onSubmit={handleAddTransaction}
+              banks={banks}
+              clientes={clientes}
+              setClients={setClients}
+              selectedBank={selectedBank ?? undefined}
+            />
+          </div>
+        </div>
+
+        {/* tabla y paginación */}
+        <TransactionTable
+          transactions={pageTx}
+          onEdit={(tx) => setTransactionToEdit(tx)}
+          onDelete={(id) => {
+            setTransactionToDelete(id);
+            setOpenConfirmDialog(true);
+          }}
+        />
+        <div className="flex justify-end mt-4">
+          <Pagination
+            count={Math.ceil(
+              processedTransactions.length / transactionsPerPage
+            )}
+            page={currentPage}
+            onChange={(_, v) => setCurrentPage(v)}
+            color="primary"
           />
         </div>
-      </div>
 
-      {/* tabla y paginación */}
-      <TransactionTable
-        transactions={pageTx}
-        onEdit={(tx) => setTransactionToEdit(tx)}
-        onDelete={(id) => {
-          setTransactionToDelete(id);
-          setOpenConfirmDialog(true);
-        }}
-      />
-      <div className="flex justify-end mt-4">
-        <Pagination
-          count={Math.ceil(processedTransactions.length / transactionsPerPage)}
-          page={currentPage}
-          onChange={(_, v) => setCurrentPage(v)}
-          color="primary"
+        {/* modal editar */}
+        {transactionToEdit && (
+          <EditTransactionButton
+            transactionToEdit={transactionToEdit}
+            banks={banks}
+            clientes={clientes}
+            setClientes={setClients}
+            onSubmit={handleUpdateTransaction}
+            onClose={() => setTransactionToEdit(null)}
+          />
+        )}
+
+        {/* confirm delete */}
+        <ConfirmDialog
+          open={openConfirmDialog}
+          title="Confirmar eliminación"
+          description="¿Estás seguro?"
+          onConfirm={handleDeleteTransaction}
+          onCancel={() => setOpenConfirmDialog(false)}
         />
-      </div>
-
-      {/* modal editar */}
-      {transactionToEdit && (
-        <EditTransactionButton
-          transactionToEdit={transactionToEdit}
-          banks={banks}
-          clientes={clientes}
-          setClientes={setClients}
-          onSubmit={handleUpdateTransaction}
-          onClose={() => setTransactionToEdit(null)}
-        />
-      )}
-
-      {/* confirm delete */}
-      <ConfirmDialog
-        open={openConfirmDialog}
-        title="Confirmar eliminación"
-        description="¿Estás seguro?"
-        onConfirm={handleDeleteTransaction}
-        onCancel={() => setOpenConfirmDialog(false)}
-      />
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
           onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </div>
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity={snackbar.severity}
+            sx={{ width: "100%" }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </div>
+    </>
   );
 }
