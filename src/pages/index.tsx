@@ -168,7 +168,6 @@ export default function Home() {
       );
       syncBanks().catch(console.error);
       showSnackbar("Transacción actualizada con éxito");
-      setTransactionToEdit(null); // <- cerrar el modal
       return res.data;
     });
 
@@ -211,9 +210,13 @@ export default function Home() {
           selectedBank={selectedBank}
           onFilter={(b) => {
             setSelectedBank(b);
-            b
-              ? localStorage.setItem("selectedBank", JSON.stringify(b))
-              : localStorage.removeItem("selectedBank");
+
+            if (b) {
+              localStorage.setItem("selectedBank", JSON.stringify(b));
+            } else {
+              localStorage.removeItem("selectedBank");
+            }
+
             setCurrentPage(1);
           }}
           totalSaldo={totalSaldo}
