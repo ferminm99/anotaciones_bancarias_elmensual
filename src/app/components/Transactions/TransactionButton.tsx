@@ -23,10 +23,12 @@ interface ApiResponse<T> {
 }
 
 interface TransactionButtonProps {
-  onSubmit: (data: CreateTransaction) => Promise<ApiResponse<any>>;
+  onSubmit: (
+    data: CreateTransaction
+  ) => Promise<ApiResponse<{ cliente_id?: number }>>;
   banks: Bank[];
   clientes: Cliente[];
-  setClientes: React.Dispatch<React.SetStateAction<Cliente[]>>;
+  setClients: React.Dispatch<React.SetStateAction<Cliente[]>>;
   selectedBank?: Bank;
 }
 
@@ -34,7 +36,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
   onSubmit,
   banks,
   clientes,
-  setClientes,
+  setClients,
   selectedBank: initialSelectedBank, // Recibe el banco seleccionado desde las props
 }) => {
   const [open, setOpen] = useState<boolean>(false);
@@ -71,10 +73,9 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
   }, [initialSelectedBank]);
 
   useEffect(() => {
-    // Actualiza la lista local de clientes al cambiar el estado global
-    setClientes(clientes);
+    setClients(clientes);
     console.log("Clientes actualizados en TransactionButton:", clientes);
-  }, [clientes]);
+  }, [clientes, setClients]);
 
   const isFormValid = () => {
     const montoNumerico = parseFloat(
@@ -204,7 +205,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
           };
 
           // Verifica si el cliente ya existe
-          setClientes((prevClientes) => {
+          setClients((prevClientes) => {
             const existe = prevClientes.some(
               (cliente) => cliente.cliente_id === nuevoClienteObj.cliente_id
             );

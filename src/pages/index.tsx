@@ -214,7 +214,7 @@ export default function Home() {
             onSubmit={handleAddTransaction}
             banks={banks}
             clientes={clientes}
-            setClientes={setClients}
+            setClients={setClients}
             selectedBank={selectedBank ?? undefined}
           />
         </div>

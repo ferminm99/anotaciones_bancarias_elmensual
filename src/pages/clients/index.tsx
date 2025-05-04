@@ -57,10 +57,30 @@ const Clientes: React.FC = () => {
 
   const handleEdit = (c: Cliente) => setToEdit(c);
   const handleUpdate = (data: Cliente) => {
-    setCacheClients((prev) =>
-      prev.map((c) => (c.cliente_id === data.cliente_id ? data : c))
-    );
-    setToEdit(null);
+    updateCliente(data.cliente_id, {
+      nombre: data.nombre,
+      apellido: data.apellido ?? "",
+    })
+      .then(() => {
+        // Al retornar 200, actualizo el caché local
+        setCacheClients((prev) =>
+          prev.map((c) =>
+            c.cliente_id === data.cliente_id
+              ? {
+                  ...c,
+                  nombre: data.nombre,
+                  apellido: data.apellido,
+                  updated_at: new Date().toISOString(),
+                }
+              : c
+          )
+        );
+        setToEdit(null);
+      })
+      .catch((err) => {
+        console.error("Error al actualizar cliente:", err);
+        alert("No se pudo actualizar el cliente.");
+      });
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {

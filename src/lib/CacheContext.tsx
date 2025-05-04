@@ -48,11 +48,8 @@ interface CacheState {
   clients: CacheCliente[];
   cheques: CacheCheque[];
   lastSync: string;
-  /** Sincroniza TODO */
   syncAll: () => Promise<void>;
-  /** Sincroniza sólo bancos */
   syncBanks: () => Promise<void>;
-  /** Sincroniza sólo clientes */
   syncClients: () => Promise<void>;
   setTransactions: Dispatch<SetStateAction<CacheTransaction[]>>;
   setBanks: Dispatch<SetStateAction<CacheBank[]>>;
@@ -114,16 +111,14 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({
     }
   }
 
-  // Mapeo de recursos
-  const mapping: Record<
-    ResourceKey,
-    {
-      setter: Dispatch<SetStateAction<any[]>>;
-      listFn: () => Promise<{ data: any[] }>;
-      changesFn: (since: string) => Promise<{ data: any[] }>;
-      keyField: string;
-    }
-  > = {
+  // Mapeo de recursos tipado
+  interface MapEntry<T> {
+    setter: Dispatch<SetStateAction<T[]>>;
+    listFn: () => Promise<{ data: T[] }>;
+    changesFn: (since: string) => Promise<{ data: T[] }>;
+    keyField: keyof T;
+  }
+  const mapping: Record<ResourceKey, MapEntry<any>> = {
     transactions: {
       setter: setTransactions,
       listFn: getTransactions,
@@ -158,28 +153,32 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({
     for (const key of keys) {
       const { setter, listFn, changesFn, keyField } = mapping[key];
       console.log(`[Cache] syncing "${key}"…`);
-      let newItems: any[];
+      let newItems: unknown[];
       try {
         newItems = await fetchItems(listFn, changesFn, lastSync);
-      } catch (err) {
+      } catch {
         console.warn(`[Cache] skip "${key}" due to fetch error`);
         continue;
       }
       console.log(`[Cache] fetched ${newItems.length} new items for "${key}"`);
-      setter((old: any[]) => {
+
+      setter((old) => {
+        // filtrar antiguos y luego mergear
         const merged = [
-          ...old.filter(
-            (o) => !newItems.some((n) => n[keyField] === o[keyField])
+          ...(old as any[]).filter(
+            (o) => !newItems.some((n) => (n as any)[keyField] === o[keyField])
           ),
-          ...newItems,
+          ...(newItems as any[]),
         ];
-        // eliminar duplicados por keyField
-        const deduped = Array.from(
-          new Map(merged.map((item) => [item[keyField], item])).values()
+        // dedupe por keyField
+        return Array.from(
+          new Map(merged.map((item: any) => [item[keyField], item])).values()
         );
-        return deduped;
       });
-      newItems.forEach((i: any) => i.updated_at && dates.push(i.updated_at));
+
+      (newItems as any[]).forEach((i) => {
+        if ((i as any).updated_at) dates.push((i as any).updated_at);
+      });
     }
 
     if (dates.length > 0) {
@@ -209,19 +208,19 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     if (!hydrated) return;
     console.log("[Cache] starting initial syncAll");
-    syncAll().catch((err) => console.error("[Cache] syncAll error", err));
+    syncAll().catch((error) => console.error("[Cache] syncAll error", error));
     const iv = setInterval(() => {
       console.log("[Cache] interval syncAll");
-      syncAll().catch((err) => console.error("[Cache] syncAll error", err));
+      syncAll().catch((error) => console.error("[Cache] syncAll error", error));
     }, 24 * 3600 * 1000);
     return () => clearInterval(iv);
-  }, [hydrated]);
+  }, [hydrated, syncAll]);
 
-  // Persist en localStorage
+  // Persistencia en localStorage
   useEffect(() => {
     if (!hydrated) return;
     console.log("[Cache] persisting to localStorage");
-    if (lastSync) localStorage.setItem("cache.lastSync", lastSync);
+    localStorage.setItem("cache.lastSync", lastSync);
     localStorage.setItem("cache.transactions", JSON.stringify(transactions));
     localStorage.setItem("cache.banks", JSON.stringify(banks));
     localStorage.setItem("cache.clients", JSON.stringify(clients));
