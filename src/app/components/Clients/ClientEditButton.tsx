@@ -38,7 +38,10 @@ const ClientEditButton: React.FC<EditClientButtonProps> = ({
 
   const handleSubmit = () => {
     if (client) {
-      updateCliente(client.cliente_id, client)
+      updateCliente(client.cliente_id, {
+        nombre: client.nombre,
+        apellido: client.apellido ?? "",
+      })
         .then(() => {
           onSubmit(client); // Llama a onSubmit con los datos actualizados
         })

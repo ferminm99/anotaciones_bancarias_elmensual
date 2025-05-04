@@ -42,7 +42,9 @@ const TransactionTable: React.FC<{
   onDelete: (id: number) => void;
 }> = ({ transactions, onEdit, onDelete }) => {
   const showChequeCol = transactions.some((tx) => tx.numero_cheque);
-
+  const uniqueTx = Array.from(
+    new Map(transactions.map((tx) => [tx.transaccion_id, tx])).values()
+  );
   return (
     <TableContainer component={Paper} className="shadow-lg rounded-lg">
       <Table className="table-auto min-w-full divide-y divide-gray-200">
@@ -67,7 +69,7 @@ const TransactionTable: React.FC<{
           </TableRow>
         </TableHead>
         <TableBody className="bg-white divide-y divide-gray-200">
-          {transactions.map((transaction) => (
+          {uniqueTx.map((transaction) => (
             <TableRow key={transaction.transaccion_id}>
               <TableCell>{formatDate(transaction.fecha)}</TableCell>
 

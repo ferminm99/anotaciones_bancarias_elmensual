@@ -16,14 +16,14 @@ import {
   FormLabel,
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
-import { Bank, Cliente, Transaction, CreateTransaction } from "../../types";
+import { Bank, Cliente, CreateTransaction } from "../../types";
 
 interface ApiResponse<T> {
   data: T;
 }
 
 interface TransactionButtonProps {
-  onSubmit: (data: CreateTransaction) => Promise<ApiResponse<Transaction>>;
+  onSubmit: (data: CreateTransaction) => Promise<ApiResponse<any>>;
   banks: Bank[];
   clientes: Cliente[];
   setClientes: React.Dispatch<React.SetStateAction<Cliente[]>>;
@@ -200,6 +200,7 @@ const TransactionButton: React.FC<TransactionButtonProps> = ({
             cliente_id: response.data.cliente_id,
             nombre: nuevoCliente.split(" ")[0] || "SinNombre",
             apellido: nuevoCliente.split(" ").slice(1).join(" ") || "",
+            updated_at: new Date().toISOString(),
           };
 
           // Verifica si el cliente ya existe

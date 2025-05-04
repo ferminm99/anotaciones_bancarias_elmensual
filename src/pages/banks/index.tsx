@@ -1,49 +1,50 @@
-import { useEffect, useState } from "react";
-import { getBanks, deleteBank, addBank } from "../../app/services/api";
+// src/app/banks/page.tsx  (o la ruta donde esté tu página de Bancos)
+
+import React, { useEffect, useState } from "react";
+import { useCache } from "@/lib/CacheContext";
+import { addBank, updateBank, deleteBank } from "../../app/services/api";
 import BankTable from "../../app/components/Banks/BankTable";
 import AddBankButton from "../../app/components/Banks/AddBankButton";
 import ConfirmDialog from "../../app/components/ConfirmDialog";
-import { Bank } from "../../app/types";
 import EditBankButton from "../../app/components/Banks/EditBankButton";
-import { updateBank } from "../../app/services/api"; // Importa la función que realiza la solicitud al backend
+import type { Bank } from "../../app/types";
 
 const Banks: React.FC = () => {
-  const [banks, setBanks] = useState<Bank[]>([]);
+  // 1) Sacamos los bancos y el setter del cache global
+  const { banks, syncBanks, setBanks: setCacheBanks } = useCache();
+
+  // 2) Estado local para filtrado, búsqueda y diálogos
   const [filteredBanks, setFilteredBanks] = useState<Bank[]>([]);
-  const [openConfirmDialog, setOpenConfirmDialog] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [bankToDelete, setBankToDelete] = useState<number | null>(null);
   const [bankToEdit, setBankToEdit] = useState<Bank | null>(null);
-  const [openEditDialog, setOpenEditDialog] = useState<boolean>(false);
-  const [searchTerm, setSearchTerm] = useState<string>(""); // Para el término de búsqueda
+
+  // 3) Cada vez que cambian `banks` (cache), reordenamos y actualizamos `filteredBanks`
+  useEffect(() => {
+    const sorted = [...banks].sort((a, b) => a.nombre.localeCompare(b.nombre));
+    setFilteredBanks(sorted);
+  }, [banks]);
 
   useEffect(() => {
-    getBanks()
-      .then((response) => {
-        const sortedBanks = response.data.sort((a: Bank, b: Bank) =>
-          a.nombre.localeCompare(b.nombre)
-        );
-        setBanks(sortedBanks);
-        setFilteredBanks(sortedBanks);
-      })
-      .catch((error) => console.error("Error al obtener los bancos:", error));
+    syncBanks().catch(console.error);
   }, []);
+  // 4) Handlers de CRUD
 
-  const handleAddBank = (data: Omit<Bank, "banco_id">) => {
-    const bancoExistente = banks.find(
-      (bank) => bank.nombre.toLowerCase() === data.nombre.toLowerCase()
-    );
-
-    if (bancoExistente) {
+  const handleAddBank = (data: { nombre: string; saldo_total: number }) => {
+    // Previene duplicados por nombre
+    if (
+      banks.some((b) => b.nombre.toLowerCase() === data.nombre.toLowerCase())
+    ) {
       alert("Ya existe un banco con este nombre.");
       return;
     }
-
     addBank(data)
-      .then((response) => {
-        setBanks((prev) => [...prev, response.data]);
-        setFilteredBanks((prev) => [...prev, response.data]);
+      .then((res) => {
+        // Actualizamos el cache; el useEffect arriba actualizará filteredBanks
+        setCacheBanks((prev) => [...prev, res.data]);
       })
-      .catch((error) => console.error("Error al agregar banco:", error));
+      .catch((err) => console.error("Error al agregar banco:", err));
   };
 
   const confirmDeleteBank = (id: number) => {
@@ -52,86 +53,62 @@ const Banks: React.FC = () => {
   };
 
   const handleDeleteBank = () => {
-    if (bankToDelete !== null) {
-      deleteBank(bankToDelete)
-        .then(() => {
-          const updatedBanks = banks.filter(
-            (bank) => bank.banco_id !== bankToDelete
-          );
-          setBanks(updatedBanks);
-          setFilteredBanks(updatedBanks);
-          setOpenConfirmDialog(false);
-        })
-        .catch((error) => console.error("Error al eliminar el banco:", error));
-    }
+    if (bankToDelete == null) return;
+    deleteBank(bankToDelete)
+      .then(() => {
+        setCacheBanks((prev) =>
+          prev.filter((b) => b.banco_id !== bankToDelete)
+        );
+        setOpenConfirmDialog(false);
+      })
+      .catch((err) => console.error("Error al eliminar banco:", err));
   };
 
   const handleEditBank = (bank: Bank) => {
     setBankToEdit(bank);
-    setOpenEditDialog(true);
-    console.log(openEditDialog);
   };
 
   const handleUpdateBank = (data: Bank) => {
-    const bancoExistente = banks.find(
-      (bank) =>
-        bank.nombre.toLowerCase() === data.nombre.toLowerCase() &&
-        bank.banco_id !== data.banco_id
-    );
-
-    if (bancoExistente) {
+    // Previene duplicados por nombre en otro registro
+    if (
+      banks.some(
+        (b) =>
+          b.banco_id !== data.banco_id &&
+          b.nombre.toLowerCase() === data.nombre.toLowerCase()
+      )
+    ) {
       alert("Ya existe otro banco con este nombre.");
       return;
     }
-
-    // Actualizamos el estado local con los valores de `data` antes de llamar al backend
-    setBanks((prevBanks) => {
-      const updatedBanks = prevBanks.map((bnk) =>
-        bnk.banco_id === data.banco_id
-          ? { ...bnk, nombre: data.nombre, saldo_total: data.saldo_total } // Utilizamos `data.nombre` y `data.saldo_total` directamente
-          : bnk
-      );
-      return updatedBanks.sort((a, b) => a.nombre.localeCompare(b.nombre));
-    });
-
-    setFilteredBanks((prevBanks) => {
-      const updatedFilteredBanks = prevBanks.map((bnk) =>
-        bnk.banco_id === data.banco_id
-          ? { ...bnk, nombre: data.nombre, saldo_total: data.saldo_total } // Actualizamos ambos valores en `filteredBanks`
-          : bnk
-      );
-      return updatedFilteredBanks.sort((a, b) =>
-        a.nombre.localeCompare(b.nombre)
-      );
-    });
-
-    // Llamada al backend para actualizar el banco
+    // Actualizamos cache inmediatamente
+    setCacheBanks((prev) =>
+      prev.map((b) => (b.banco_id === data.banco_id ? data : b))
+    );
     updateBank(data.banco_id, data)
-      .then(() => {
-        setBankToEdit(null);
-        setOpenEditDialog(false);
-      })
-      .catch((error) => console.error("Error al actualizar el banco:", error));
+      .then(() => setBankToEdit(null))
+      .catch((err) => console.error("Error al actualizar banco:", err));
   };
 
-  // Función para manejar la búsqueda
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, ""); // Elimina tildes y normaliza el texto
+      .replace(/[\u0300-\u036f]/g, "");
     setSearchTerm(term);
-
-    const filtered = banks.filter((bank) =>
-      bank.nombre.toLowerCase().includes(term)
+    setFilteredBanks(
+      banks.filter((b) =>
+        b.nombre
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .includes(term)
+      )
     );
-    setFilteredBanks(filtered);
   };
 
+  // 5) Renderizado
   return (
     <div className="max-w-5xl mx-auto px-4">
-      {" "}
-      {/* Ajustamos el ancho y centramos */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Bancos</h1>
         <div className="flex items-center space-x-4">
@@ -140,23 +117,26 @@ const Banks: React.FC = () => {
             placeholder="Buscar por nombre del banco..."
             value={searchTerm}
             onChange={handleSearch}
-            className="border p-2 rounded h-10 mt-3 w-64" // Ajustamos el tamaño del campo de búsqueda
+            className="border p-2 rounded h-10 w-64"
           />
           <AddBankButton onSubmit={handleAddBank} />
         </div>
       </div>
+
       <BankTable
-        banks={filteredBanks.length ? filteredBanks : banks}
+        banks={filteredBanks}
         onEdit={handleEditBank}
         onDelete={confirmDeleteBank}
       />
+
       <ConfirmDialog
         open={openConfirmDialog}
         title="Confirmar Eliminación"
-        description={`¿Estás seguro que deseas eliminar este banco?`}
+        description="¿Estás seguro que deseas eliminar este banco?"
         onConfirm={handleDeleteBank}
         onCancel={() => setOpenConfirmDialog(false)}
       />
+
       {bankToEdit && (
         <EditBankButton
           bankToEdit={bankToEdit}

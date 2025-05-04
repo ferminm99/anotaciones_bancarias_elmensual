@@ -14,6 +14,7 @@ router.get("/", authenticateToken, (req, res) => {
       transacciones.banco_id,      
       transacciones.cliente_id,   
       transacciones.cheque_id,     
+      transacciones.updated_at,
       bancos.nombre AS nombre_banco, 
       CONCAT(clientes.nombre, ' ', COALESCE(clientes.apellido, '')) AS nombre_cliente,
       cheques.numero AS numero_cheque
@@ -30,6 +31,20 @@ router.get("/", authenticateToken, (req, res) => {
       return;
     }
     res.json(results.rows); // PostgreSQL devuelve los resultados en "rows"
+  });
+});
+
+// GET /api/transacciones/changes?since=YYYY-MM-DDTHH:MM:SSZ
+router.get("/changes", authenticateToken, (req, res) => {
+  const since = req.query.since;
+  const q = `
+       SELECT transaccion_id, fecha, tipo, monto, banco_id, cliente_id, cheque_id, updated_at
+       FROM transacciones
+       WHERE updated_at > $1
+     `;
+  connection.query(q, [since], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(result.rows || []);
   });
 });
 
@@ -64,51 +79,6 @@ router.post("/", authenticateToken, (req, res) => {
   function insertarTransaccion(cliente_id, nombre_cliente) {
     console.log("Insertando transacción con cliente_id:", cliente_id);
 
-    // Si la transacción es un pago con cheque haciamos un chequeo de si ese cheque existe pero creo que generara mas problemas...
-    // por ej si existe ese cheque luego ambas transacciones quedan linkeadas con el mismo cheque y no podria cambiar el numero sin modificarlo en la otra
-    // if (tipo === "pago_cheque" && numero_cheque) {
-    //   console.log(
-    //     "Transacción es un pago con cheque, número cheque:",
-    //     numero_cheque
-    //   );
-
-    //   // Buscar si el cheque ya existe por su número
-    //   const queryCheque = "SELECT cheque_id FROM cheques WHERE numero = $1";
-    //   connection.query(queryCheque, [numero_cheque], (err, result) => {
-    //     if (err) {
-    //       console.error("Error al buscar cheque:", err);
-    //       return res.status(500).send("Error al buscar cheque");
-    //     }
-
-    //     if (result.rows.length > 0) {
-    //       // El cheque ya existe, usamos su cheque_id
-    //       idCheque = result.rows[0].cheque_id;
-    //       console.log("Cheque ya existe con cheque_id:", idCheque);
-    //       realizarInsercionTransaccion(idCheque);
-    //     } else {
-    //       // El cheque no existe, lo creamos
-    //       console.log(
-    //         "Cheque no existe, creando nuevo cheque con número:",
-    //         numero_cheque
-    //       );
-    //       const insertCheque =
-    //         "INSERT INTO cheques (numero) VALUES ($1) RETURNING cheque_id";
-    //       connection.query(insertCheque, [numero_cheque], (err, result) => {
-    //         if (err) {
-    //           console.error("Error al insertar cheque:", err);
-    //           return res.status(500).send("Error al insertar cheque");
-    //         }
-    //         idCheque = result.rows[0].cheque_id;
-    //         console.log("Cheque ya existe con cheque_id:", idCheque);
-    //         realizarInsercionTransaccion(idCheque);
-    //       });
-    //     }
-    //   });
-    // } else {
-    //   console.log("Transacción no es un pago con cheque.");
-    //   realizarInsercionTransaccion(null);
-    // }
-
     // 1) Insertar siempre un nuevo cheque
     if (tipo === "pago_cheque" && numero_cheque) {
       connection.query(
@@ -117,11 +87,12 @@ router.post("/", authenticateToken, (req, res) => {
         (err, result) => {
           if (err) return res.status(500).send("Error al insertar cheque");
           const nuevoChequeId = result.rows[0].cheque_id;
-          realizarInsercionTransaccion(clienteId, nuevoChequeId);
+          // ← usamos el parámetro correcto
+          realizarInsercionTransaccion(nuevoChequeId);
         }
       );
     } else {
-      realizarInsercionTransaccion(clienteId, null);
+      realizarInsercionTransaccion(null);
     }
     // Función para realizar la inserción de la transacción
     function realizarInsercionTransaccion(cheque_id) {
@@ -131,7 +102,7 @@ router.post("/", authenticateToken, (req, res) => {
       );
 
       const query =
-        "INSERT INTO transacciones (fecha, cliente_id, tipo, monto, banco_id, cheque_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING transaccion_id";
+        "INSERT INTO transacciones (fecha, cliente_id, tipo, monto, banco_id, cheque_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING transaccion_id,fecha, tipo, monto, banco_id, cliente_id, cheque_id, updated_at";
 
       connection.query(
         query,
@@ -396,7 +367,7 @@ router.put("/:transaccion_id", authenticateToken, (req, res) => {
     // Función para actualizar la transacción
     function actualizarTransaccion(cheque_id, resolvedClienteId) {
       const query =
-        "UPDATE transacciones SET fecha = $1, cliente_id = $2, tipo = $3, monto = $4, banco_id = $5, cheque_id = $6 WHERE transaccion_id = $7";
+        "UPDATE transacciones SET fecha = $1, cliente_id = $2, tipo = $3, monto = $4, banco_id = $5, cheque_id = $6 WHERE transaccion_id = $7 RETURNING transaccion_id, fecha, tipo, monto, banco_id, cliente_id, cheque_id, updated_at";
 
       connection.query(
         query,
@@ -437,7 +408,7 @@ router.delete("/:id", authenticateToken, (req, res) => {
   const { id } = req.params;
 
   const query =
-    "DELETE FROM transacciones WHERE transaccion_id = $1 RETURNING cheque_id";
+    "DELETE FROM transacciones WHERE transaccion_id = $1 RETURNING cheque_id, updated_at";
 
   connection.query(query, [id], (err, result) => {
     if (err) {

@@ -1,4 +1,4 @@
-// Definimos las interfaces de las entidades que usamos en la aplicación
+// src/app/types.ts
 
 export interface Transaction {
   transaccion_id: number;
@@ -10,7 +10,8 @@ export interface Transaction {
   banco_id: number;
   cheque_id: number | null;
   nombre_banco: string;
-  numero_cheque?: string | null; // Agrega este campo
+  numero_cheque?: string | null;
+  updated_at: string;
 }
 
 export interface CreateTransaction {
@@ -21,22 +22,25 @@ export interface CreateTransaction {
   monto: number | null;
   banco_id: number;
   numero_cheque: string | null;
+  updated_at?: string;
 }
 
 export interface Bank {
   banco_id: number;
   nombre: string;
   saldo_total: number;
+  updated_at: string;
 }
 
 export interface Cliente {
   cliente_id: number;
   nombre: string;
-  apellido: string;
+  apellido: string | null;
+  updated_at: string;
 }
 
 export interface Cheque {
-  cliente_id: number;
   cheque_id: number;
   numero: number;
+  updated_at: string;
 }

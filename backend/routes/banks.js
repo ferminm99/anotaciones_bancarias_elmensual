@@ -17,6 +17,19 @@ router.get("/", authenticateToken, (req, res) => {
   });
 });
 
+router.get("/changes", authenticateToken, (req, res) => {
+  const since = req.query.since;
+  const q = `
+    SELECT banco_id, nombre, saldo_total, updated_at
+    FROM bancos
+    WHERE updated_at > $1
+  `;
+  connection.query(q, [since], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(result.rows || []);
+  });
+});
+
 // Ruta para agregar un banco
 router.post("/", authenticateToken, (req, res) => {
   const { nombre, saldo_total } = req.body;
@@ -36,7 +49,7 @@ router.post("/", authenticateToken, (req, res) => {
 
     // Si el banco no existe, procedemos a insertarlo
     const insertQuery =
-      "INSERT INTO bancos (nombre, saldo_total) VALUES ($1, $2) RETURNING banco_id";
+      "INSERT INTO bancos (nombre, saldo_total) VALUES ($1, $2) RETURNING banco_id, nombre, saldo_total, updated_at";
     connection.query(insertQuery, [nombre, saldo_total], (err, result) => {
       if (err) {
         console.error("Error al agregar banco:", err);
@@ -73,7 +86,7 @@ router.put("/:id", authenticateToken, (req, res) => {
 
     // Si no existe otro banco con el mismo nombre, procedemos a actualizarlo
     const updateQuery =
-      "UPDATE bancos SET nombre = $1, saldo_total = $2 WHERE banco_id = $3";
+      "UPDATE bancos SET nombre = $1, saldo_total = $2 WHERE banco_id = $3 RETURNING banco_id, nombre, saldo_total, updated_at";
     connection.query(updateQuery, [nombre, saldo_total, id], (err, result) => {
       if (err) {
         console.error("Error al actualizar banco:", err);
@@ -92,7 +105,8 @@ router.put("/:id", authenticateToken, (req, res) => {
 // Ruta para eliminar un banco
 router.delete("/:id", authenticateToken, (req, res) => {
   const { id } = req.params;
-  const query = "DELETE FROM bancos WHERE banco_id = $1";
+  const query =
+    "DELETE FROM bancos WHERE banco_id = $1 RETURNING banco_id, updated_at";
   connection.query(query, [id], (err, result) => {
     if (err) {
       console.error("Error al eliminar banco:", err);

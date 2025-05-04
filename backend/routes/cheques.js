@@ -16,6 +16,19 @@ router.get("/", authenticateToken, (req, res) => {
   });
 });
 
+router.get("/changes", authenticateToken, (req, res) => {
+  const since = req.query.since;
+  const q = `
+    SELECT cheque_id, numero, updated_at
+    FROM cheques
+    WHERE updated_at > $1 
+  `;
+  connection.query(q, [since], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(result.rows || []);
+  });
+});
+
 // Ruta para agregar un nuevo cheque
 router.post("/", authenticateToken, (req, res) => {
   const { numero } = req.body;
@@ -24,7 +37,8 @@ router.post("/", authenticateToken, (req, res) => {
     return;
   }
 
-  const query = "INSERT INTO cheques (numero) VALUES ($1) RETURNING cheque_id";
+  const query =
+    "INSERT INTO cheques (numero) VALUES ($1) RETURNING cheque_id, updated_at";
   connection.query(query, [numero], (err, result) => {
     if (err) {
       console.error("Error al agregar cheque:", err);

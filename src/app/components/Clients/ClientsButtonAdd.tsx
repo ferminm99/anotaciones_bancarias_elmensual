@@ -29,8 +29,8 @@ const AddClienteButton: React.FC<AddClienteButtonProps> = ({ onSubmit }) => {
   };
 
   const handleSubmit = () => {
-    if (!nombre || !apellido) {
-      alert("Por favor, completa todos los campos.");
+    if (!nombre) {
+      alert("Por favor, completa el nombre.");
       return;
     }
 

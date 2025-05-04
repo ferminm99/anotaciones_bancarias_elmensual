@@ -1,3 +1,4 @@
+// src/app/components/Banks/BankTable.tsx
 import * as React from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -9,14 +10,20 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
-import { Bank } from "../../types"; // Asegúrate de que el tipo de Bank esté definido
-import { formatNumber } from "../../../utils/formatNumber"; // Si tienes una función para formatear números
+import { Bank } from "../../types";
+import { formatNumber } from "../../../utils/formatNumber";
 
 const BankTable: React.FC<{
   banks: Bank[];
   onEdit: (bank: Bank) => void;
   onDelete: (id: number) => void;
 }> = ({ banks, onEdit, onDelete }) => {
+  // eliminar duplicados por banco_id
+  const uniqueBanks = React.useMemo(
+    () => Array.from(new Map(banks.map((b) => [b.banco_id, b])).values()),
+    [banks]
+  );
+
   return (
     <TableContainer component={Paper} className="shadow-lg rounded-lg">
       <Table className="table-auto min-w-full divide-y divide-gray-200">
@@ -28,7 +35,7 @@ const BankTable: React.FC<{
           </TableRow>
         </TableHead>
         <TableBody className="bg-white divide-y divide-gray-200">
-          {banks.map((bank) => (
+          {uniqueBanks.map((bank) => (
             <TableRow key={bank.banco_id}>
               <TableCell>{bank.nombre}</TableCell>
               <TableCell>{formatNumber(bank.saldo_total)}</TableCell>

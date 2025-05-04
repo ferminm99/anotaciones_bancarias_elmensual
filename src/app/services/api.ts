@@ -1,5 +1,11 @@
 import axios from "axios";
-import { Transaction, CreateTransaction, Bank } from "../types";
+import {
+  Transaction,
+  CreateTransaction,
+  Bank,
+  Cheque,
+  Cliente,
+} from "../types";
 
 // //Configura Axios con la baseURL
 // const api = axios.create({
@@ -14,9 +20,9 @@ const api = axios.create({
 console.log("Usando API URL:", process.env.NEXT_PUBLIC_API_URL);
 
 // Función para obtener transacciones desde el backend
-export const getTransactions = () => {
-  return api.get("/transacciones"); // Usa la baseURL y agrega la ruta relativa
-};
+export const getTransactions = () => api.get<Transaction[]>("/transacciones");
+export const getTransactionsChanges = (since: string) =>
+  api.get<Transaction[]>("/transacciones/changes", { params: { since } });
 
 // Función para agregar una nueva transacción
 export const addTransaction = (data: CreateTransaction) => {
@@ -34,9 +40,9 @@ export const deleteTransaction = (id: number) => {
 };
 
 // Función para obtener todos los bancos
-export const getBanks = () => {
-  return api.get("/bancos"); // Usa la baseURL y agrega la ruta relativa
-};
+export const getBanks = () => api.get<Bank[]>("/bancos");
+export const getBanksChanges = (since: string) =>
+  api.get<Bank[]>("/bancos/changes", { params: { since } });
 
 // Función para agregar un nuevo banco
 export const addBank = (data: { nombre: string; saldo_total: number }) => {
@@ -54,9 +60,9 @@ export const deleteBank = (id: number) => {
 };
 
 // Función para obtener todos los clientes
-export const getClientes = () => {
-  return api.get("/clientes"); // Usa la baseURL y agrega la ruta relativa
-};
+export const getClientes = () => api.get<Cliente[]>("/clientes");
+export const getClientesChanges = (since: string) =>
+  api.get<Cliente[]>("/clientes/changes", { params: { since } });
 
 export const updateCliente = (
   cliente_id: number,
@@ -74,9 +80,9 @@ export const deleteCliente = (id: number) => {
 };
 
 // Funciones para cheques
-export const getCheques = () => {
-  return api.get("/cheques"); // Usa la baseURL y agrega la ruta relativa
-};
+export const getCheques = () => api.get<Cheque[]>("/cheques");
+export const getChequesChanges = (since: string) =>
+  api.get<Cheque[]>("/cheques/changes", { params: { since } });
 
 //autenticacion
 export const login = async (
@@ -93,44 +99,32 @@ export const login = async (
   }
 };
 
-//Interceptor para proteger solicitudes
+// …
+// Interceptor para proteger solicitudes
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
+// Único interceptor.response
 api.interceptors.response.use(
-  (response) => response, // Si la respuesta es exitosa, simplemente retórnala
-  async (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      console.error("Token inválido o expirado. Redirigiendo al login...");
-      localStorage.removeItem("token"); // Elimina el token del almacenamiento local
-      // Puedes redirigir al usuario al login si es necesario
-      window.location.href = "/login"; // Redirige al login
-    }
-    return Promise.reject(error); // Propaga el error si no es relacionado al token
-  }
-);
-// Intercepta las respuestas del backend
-api.interceptors.response.use(
-  (response) => response, // Si la respuesta es exitosa, simplemente retórnala
+  (response) => response,
   (error) => {
-    // Si el token expiró o es inválido
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      console.error("Token inválido o expirado.");
+    const status = error.response?.status;
+    const url = error.config?.url || "";
 
-      // Opcional: Mostrar un mensaje al usuario
-      alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
-
-      // Elimina el token y redirige al login
+    // Ignoramos cualquier 401/403 que venga de los endpoints de login/validate-token
+    if (
+      (status === 401 || status === 403) &&
+      !url.includes("/auth/login") &&
+      !url.includes("/auth/validate-token")
+    ) {
+      console.warn("Token inválido o expirado, redirigiendo a login…");
       localStorage.removeItem("token");
       window.location.href = "/login";
     }
 
-    // Propaga otros errores
     return Promise.reject(error);
   }
 );
@@ -144,3 +138,5 @@ export const validateToken = async (): Promise<boolean> => {
     return false; // El token no es válido
   }
 };
+
+export default api;

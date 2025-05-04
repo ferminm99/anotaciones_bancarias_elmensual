@@ -1,3 +1,4 @@
+// src/app/components/Clients/ClientsTable.tsx
 import * as React from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -16,6 +17,12 @@ const ClienteTable: React.FC<{
   onEdit: (cliente: Cliente) => void;
   onDelete: (id: number) => void;
 }> = ({ clientes, onEdit, onDelete }) => {
+  // eliminar duplicados por cliente_id
+  const uniqueClientes = React.useMemo(
+    () => Array.from(new Map(clientes.map((c) => [c.cliente_id, c])).values()),
+    [clientes]
+  );
+
   return (
     <TableContainer component={Paper} className="shadow-lg rounded-lg">
       <Table className="table-auto min-w-full divide-y divide-gray-200">
@@ -27,13 +34,13 @@ const ClienteTable: React.FC<{
           </TableRow>
         </TableHead>
         <TableBody className="bg-white divide-y divide-gray-200">
-          {clientes.map((cliente) => (
+          {uniqueClientes.map((cliente) => (
             <TableRow key={cliente.cliente_id}>
               <TableCell>{cliente.nombre}</TableCell>
               <TableCell>{cliente.apellido}</TableCell>
               <TableCell>
                 <IconButton
-                  onClick={() => onEdit(cliente)} // Llamada al handler de editar
+                  onClick={() => onEdit(cliente)}
                   aria-label="edit"
                   className="text-gray-500 hover:text-blue-500"
                 >

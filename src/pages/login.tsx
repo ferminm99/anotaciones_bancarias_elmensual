@@ -1,27 +1,42 @@
-import React, { useState } from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import { TextField, Button, Box, Typography } from "@mui/material";
-import { login } from "@/app/services/api"; // Importa la función login que hicimos en api.ts
+import { login, validateToken } from "@/app/services/api";
 import { useRouter } from "next/router";
 
-const Login = () => {
+const LoginPage: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
 
+  // 1) Si ya hay token en localStorage, lo validamos una sola vez al montar
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      validateToken()
+        .then((isValid) => {
+          if (isValid) {
+            // token válido → vamos al home
+            router.replace("/");
+          }
+        })
+        .catch(() => {
+          // si da error, dejamos que el usuario se loguee
+        });
+    }
+  }, [router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage(null); // Resetear mensaje de error antes de intentar loguearse
+    setErrorMessage(null);
 
     try {
       const token = await login(username, password);
-      console.log("Token received:", token); // Verifica que el token se recibe
-      localStorage.setItem("token", token); // Guarda el token en localStorage
-      console.log("Token saved to localStorage"); // Log para confirmar que se guarda
-      router.push("/"); // Redirige a la página principal después del login
-    } catch (error) {
+      localStorage.setItem("token", token);
+      router.replace("/"); // redirigimos al home
+    } catch {
       setErrorMessage("Usuario o contraseña incorrectos");
-      console.error("Error en el login:", error);
     }
   };
 
@@ -29,28 +44,43 @@ const Login = () => {
     <Box
       component="form"
       onSubmit={handleLogin}
-      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+        maxWidth: 360,
+        mx: "auto",
+        mt: 8,
+      }}
     >
-      <Typography variant="h5">Login</Typography>
+      <Typography variant="h5" align="center">
+        Iniciar sesión
+      </Typography>
       <TextField
-        label="Username"
+        label="Usuario"
         variant="outlined"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
+        required
       />
       <TextField
-        label="Password"
+        label="Contraseña"
         variant="outlined"
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        required
       />
-      {errorMessage && <Typography color="error">{errorMessage}</Typography>}
+      {errorMessage && (
+        <Typography color="error" align="center">
+          {errorMessage}
+        </Typography>
+      )}
       <Button type="submit" variant="contained" color="primary">
-        Login
+        Entrar
       </Button>
     </Box>
   );
 };
 
-export default Login;
+export default LoginPage;

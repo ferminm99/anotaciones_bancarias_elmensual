@@ -1,113 +1,87 @@
-import { useEffect, useState } from "react";
-import { getClientes, deleteCliente, addCliente } from "../../app/services/api";
+// src/app/clientes/page.tsx
+"use client";
+
+import React, { useEffect, useState } from "react";
+import {
+  addCliente,
+  updateCliente,
+  deleteCliente,
+} from "../../app/services/api";
+import { useCache } from "@/lib/CacheContext";
 import ClienteTable from "../../app/components/Clients/ClientsTable";
 import AddClienteButton from "../../app/components/Clients/ClientsButtonAdd";
 import ConfirmDialog from "../../app/components/ConfirmDialog";
-import { Cliente } from "../../app/types";
 import EditClientButton from "../../app/components/Clients/ClientEditButton";
+import type { Cliente } from "../../app/types";
 
 const Clientes: React.FC = () => {
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [filteredClientes, setFilteredClientes] = useState<Cliente[]>([]);
-  const [openConfirmDialog, setOpenConfirmDialog] = useState<boolean>(false);
-  const [clienteToDelete, setClienteToDelete] = useState<number | null>(null);
-  const [clienteToEdit, setClienteToEdit] = useState<Cliente | null>(null);
-  const [openEditDialog, setOpenEditDialog] = useState<boolean>(false);
-  const [searchTerm, setSearchTerm] = useState<string>(""); // Para el término de búsqueda
+  const { clients, syncClients, setClients: setCacheClients } = useCache();
+  const [filtered, setFiltered] = useState<Cliente[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [toDelete, setToDelete] = useState<number | null>(null);
+  const [toEdit, setToEdit] = useState<Cliente | null>(null);
+
+  // 1) Mantener filtrado al cambiar cache
+  useEffect(() => {
+    setFiltered(clients);
+  }, [clients]);
 
   useEffect(() => {
-    getClientes()
-      .then((response) => {
-        setClientes(response.data);
-        setFilteredClientes(response.data);
-      })
-      .catch((error) => console.error("Error al obtener los clientes:", error));
+    syncClients().catch(console.error);
   }, []);
 
-  const handleAddCliente = (data: Omit<Cliente, "cliente_id">) => {
+  const handleAdd = (data: { nombre: string; apellido: string }) => {
     addCliente(data)
-      .then((response) => {
-        setClientes((prev) => [...prev, response.data]);
-        setFilteredClientes((prev) => [...prev, response.data]);
+      .then((res) => {
+        setCacheClients((prev) => [...prev, res.data]);
       })
-      .catch((error) => console.error("Error al agregar cliente:", error));
+      .catch((err) => console.error("Error al agregar cliente:", err));
   };
 
-  const confirmDeleteCliente = (id: number) => {
-    setClienteToDelete(id);
-    setOpenConfirmDialog(true);
+  const confirmDelete = (id: number) => {
+    setToDelete(id);
+    setOpenConfirm(true);
   };
-
-  const handleDeleteCliente = () => {
-    if (clienteToDelete !== null) {
-      deleteCliente(clienteToDelete)
-        .then(() => {
-          const updatedClientes = clientes.filter(
-            (cliente) => cliente.cliente_id !== clienteToDelete
-          );
-          setClientes(updatedClientes);
-          setFilteredClientes(updatedClientes);
-          setOpenConfirmDialog(false);
-        })
-        .catch((error) =>
-          console.error("Error al eliminar el cliente:", error)
+  const handleDelete = () => {
+    if (toDelete == null) return;
+    deleteCliente(toDelete)
+      .then(() => {
+        setCacheClients((prev) =>
+          prev.filter((c) => c.cliente_id !== toDelete)
         );
-    }
+        setOpenConfirm(false);
+      })
+      .catch((err) => console.error("Error al eliminar cliente:", err));
   };
 
-  const handleEditCliente = (cliente: Cliente) => {
-    setClienteToEdit(cliente);
-    setOpenEditDialog(true);
-    console.log(openEditDialog);
+  const handleEdit = (c: Cliente) => setToEdit(c);
+  const handleUpdate = (data: Cliente) => {
+    setCacheClients((prev) =>
+      prev.map((c) => (c.cliente_id === data.cliente_id ? data : c))
+    );
+    setToEdit(null);
   };
 
-  const handleUpdateCliente = (data: Cliente) => {
-    setClientes((prevClientes) => {
-      const updatedClientes = prevClientes.map((cli) =>
-        cli.cliente_id === data.cliente_id ? data : cli
-      );
-      return updatedClientes;
-    });
-
-    setFilteredClientes((prevFiltered) => {
-      const updatedFiltered = prevFiltered.map((cli) =>
-        cli.cliente_id === data.cliente_id ? data : cli
-      );
-      return updatedFiltered;
-    });
-
-    setClienteToEdit(null);
-    setOpenEditDialog(false);
-  };
-
-  // Función para manejar la búsqueda
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, ""); // Elimina tildes y normaliza el texto
-
+      .replace(/[\u0300-\u036f]/g, "");
     setSearchTerm(term);
-
-    const searchTerms = term.split(" "); // Dividimos el término de búsqueda en palabras
-
-    const filtered = clientes.filter((cliente) => {
-      const fullName = `${cliente.nombre} ${cliente.apellido}`
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, ""); // Elimina tildes y normaliza
-
-      // Verificamos si todas las palabras del término de búsqueda están en el nombre completo
-      return searchTerms.every((word) => fullName.includes(word));
-    });
-
-    setFilteredClientes(filtered);
+    setFiltered(
+      clients.filter((c) =>
+        `${c.nombre} ${c.apellido}`
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .includes(term)
+      )
+    );
   };
 
   return (
     <div className="max-w-5xl mx-auto px-4">
-      {" "}
-      {/* Ajustamos el ancho y centramos */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Clientes</h1>
         <div className="flex items-center space-x-4">
@@ -116,28 +90,31 @@ const Clientes: React.FC = () => {
             placeholder="Buscar por nombre o apellido..."
             value={searchTerm}
             onChange={handleSearch}
-            className="border p-2 rounded h-10 mt-3 w-64" // Cambia el ancho a w-64 o w-72
+            className="border p-2 rounded h-10 w-64"
           />
-          <AddClienteButton onSubmit={handleAddCliente} />
+          <AddClienteButton onSubmit={handleAdd} />
         </div>
       </div>
+
       <ClienteTable
-        clientes={filteredClientes.length ? filteredClientes : clientes}
-        onEdit={handleEditCliente}
-        onDelete={confirmDeleteCliente}
+        clientes={filtered}
+        onEdit={handleEdit}
+        onDelete={confirmDelete}
       />
+
       <ConfirmDialog
-        open={openConfirmDialog}
+        open={openConfirm}
         title="Confirmar Eliminación"
-        description={`¿Estás seguro que deseas eliminar este cliente?`}
-        onConfirm={handleDeleteCliente}
-        onCancel={() => setOpenConfirmDialog(false)}
+        description="¿Estás seguro que deseas eliminar este cliente?"
+        onConfirm={handleDelete}
+        onCancel={() => setOpenConfirm(false)}
       />
-      {clienteToEdit && (
+
+      {toEdit && (
         <EditClientButton
-          clientToEdit={clienteToEdit}
-          onSubmit={handleUpdateCliente}
-          onClose={() => setClienteToEdit(null)}
+          clientToEdit={toEdit}
+          onSubmit={handleUpdate}
+          onClose={() => setToEdit(null)}
         />
       )}
     </div>

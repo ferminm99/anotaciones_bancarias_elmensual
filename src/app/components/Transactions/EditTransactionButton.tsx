@@ -179,6 +179,7 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
         cheque_id:
           transaction.tipo === "pago_cheque" ? Number(numeroCheque) : null,
         numero_cheque: transaction.tipo === "pago_cheque" ? numeroCheque : null,
+        updated_at: transaction.updated_at,
       };
 
       onSubmit(dataToSubmit)
@@ -188,6 +189,7 @@ const EditTransactionButton: React.FC<EditTransactionButtonProps> = ({
               cliente_id: response.data.cliente_id,
               nombre: nuevoCliente.split(" ")[0] || "SinNombre",
               apellido: nuevoCliente.split(" ").slice(1).join(" ") || "",
+              updated_at: new Date().toISOString(),
             };
 
             // Agrega el cliente al estado global `clientes`
